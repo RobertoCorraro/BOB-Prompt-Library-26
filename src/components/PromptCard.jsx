@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
-import { Copy, ChevronDown, ChevronUp, Tag } from 'lucide-react';
+import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star } from 'lucide-react';
 
-export default function PromptCard({ prompt, onCopy }) {
+export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite }) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(prompt.content);
         onCopy(prompt.title);
+
+        // Trigger copy animation
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500);
     };
 
     return (
         <div
-            className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group"
+            className={`bg-white rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group ${isCopied ? 'border-green-500 shadow-green-200' : 'border-slate-200'
+                }`}
         >
             {/* Card Body - Click to Copy */}
             <div
@@ -19,16 +25,30 @@ export default function PromptCard({ prompt, onCopy }) {
                 className="p-5 cursor-pointer relative active:bg-slate-50 transition-colors"
             >
                 <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-bold text-slate-800 text-lg leading-tight group-hover:text-indigo-600 transition-colors">
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight group-hover:text-indigo-600 transition-colors flex-1 pr-2">
                         {prompt.title}
                     </h3>
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md shrink-0 ml-2">
-                        {prompt.category}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleFavorite(prompt.id, prompt.is_favorite);
+                            }}
+                            className="text-slate-300 hover:text-yellow-500 transition-colors"
+                            title={prompt.is_favorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                        >
+                            <Star
+                                className={`w-5 h-5 ${prompt.is_favorite ? 'fill-yellow-500 text-yellow-500' : ''}`}
+                            />
+                        </button>
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
+                            {prompt.category}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="relative">
-                    <p className={`text-slate-600 leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''}`}>
+                    <p className={`text-slate-600 leading-relaxed whitespace-pre-wrap ${!isExpanded ? 'line-clamp-2' : ''}`}>
                         {prompt.content}
                     </p>
                     {!isExpanded && (
@@ -36,9 +56,25 @@ export default function PromptCard({ prompt, onCopy }) {
                     )}
                 </div>
 
-                <div className="flex items-center gap-2 mt-4 text-xs text-slate-400 font-medium">
-                    <Tag className="w-3 h-3" />
-                    <span>{prompt.type}</span>
+                <div className="flex flex-wrap items-center gap-3 mt-4 text-xs text-slate-400 font-medium">
+                    <div className="flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        <span>{prompt.type}</span>
+                    </div>
+                    <div className="w-1 h-1 rounded-full bg-slate-300" />
+                    <div className="flex items-center gap-1" title="Data creazione">
+                        <Calendar className="w-3 h-3" />
+                        <span>{new Date(prompt.created_at).toLocaleDateString()}</span>
+                    </div>
+                    {prompt.updated_at && (
+                        <>
+                            <div className="w-1 h-1 rounded-full bg-slate-300" />
+                            <div className="flex items-center gap-1" title="Ultima modifica">
+                                <RefreshCw className="w-3 h-3" />
+                                <span>{new Date(prompt.updated_at).toLocaleDateString()}</span>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Copy Overlay Hint */}
@@ -46,6 +82,22 @@ export default function PromptCard({ prompt, onCopy }) {
                     <Copy className="w-4 h-4 text-indigo-500" />
                 </div>
             </div>
+
+            {/* Expanded Content Section */}
+            {isExpanded && (
+                <div className="px-5 pb-4 border-t border-slate-100 pt-4 bg-slate-50/50">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(prompt);
+                        }}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                    >
+                        <Edit2 className="w-5 h-5" />
+                        <span>Modifica Prompt</span>
+                    </button>
+                </div>
+            )}
 
             {/* Footer - Expand Action */}
             <div

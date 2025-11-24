@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2 } from 'lucide-react';
 
-const CATEGORIES = ['Psicologia', 'Marketing', 'Business', 'Copywriting', 'Coding'];
-const TYPES = ['Prompt parziale', 'Prompt template', 'System Prompt'];
-
-export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialData }) {
+export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialData, categories, types, promptTags }) {
     const [formData, setFormData] = useState({
         title: '',
         content: '',
-        category: CATEGORIES[0],
-        type: TYPES[0]
+        category: '',
+        type: ''
     });
+
+    const textareaRef = useRef(null);
 
     useEffect(() => {
         if (initialData) {
@@ -19,11 +18,11 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
             setFormData({
                 title: '',
                 content: '',
-                category: CATEGORIES[0],
-                type: TYPES[0]
+                category: categories[0] || '',
+                type: types[0] || ''
             });
         }
-    }, [initialData, isOpen]);
+    }, [initialData, isOpen, categories, types]);
 
     if (!isOpen) return null;
 
@@ -32,9 +31,38 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
         onSave(formData);
     };
 
+    const insertTag = (tagName) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = formData.content;
+
+        // Add newlines before and after the tag for proper formatting
+        const prefix = start > 0 && text[start - 1] !== '\n' ? '\n' : '';
+        const template = `${prefix}<${tagName}>\n\n</${tagName}>\n`;
+        const newText = text.substring(0, start) + template + text.substring(end);
+
+        setFormData({ ...formData, content: newText });
+
+        // Set cursor position inside the tag
+        setTimeout(() => {
+            textarea.focus();
+            const cursorPos = start + prefix.length + tagName.length + 3; // After "<tagName>\n"
+            textarea.setSelectionRange(cursorPos, cursorPos);
+        }, 0);
+    };
+
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+        <div
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                     <h2 className="text-lg font-bold text-slate-800">
                         {initialData ? 'Modifica Prompt' : 'Nuovo Prompt'}
@@ -65,7 +93,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all bg-white"
                             >
-                                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
                         <div>
@@ -75,19 +103,37 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all bg-white"
                             >
-                                {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                {types.map(t => <option key={t} value={t}>{t}</option>)}
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Contenuto Prompt</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Contenuto Prompt</label>
+
+                        {/* Tag Insertion Buttons - Now Dynamic */}
+                        {promptTags && promptTags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {promptTags.map(tag => (
+                                    <button
+                                        key={tag.id}
+                                        type="button"
+                                        onClick={() => insertTag(tag.name)}
+                                        className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors border border-indigo-200"
+                                    >
+                                        {tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
                         <textarea
+                            ref={textareaRef}
                             required
-                            rows={6}
+                            rows={12}
                             value={formData.content}
                             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none font-mono text-sm"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-y font-mono text-sm"
                             placeholder="Inserisci qui il prompt..."
                         />
                     </div>

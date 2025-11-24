@@ -1,14 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Loader2 } from 'lucide-react';
 import { supabase } from './lib/supabase';
+import { AUTH_CONFIG } from './auth.config';
+import Login from './components/Login';
 import Header from './components/Header';
 import CategoryMenu from './components/CategoryMenu';
 import FilterBar from './components/FilterBar';
 import PromptCard from './components/PromptCard';
-import Toast from './components/Toast';
 import AdminModal from './components/AdminModal';
+import Toast from './components/Toast';
+import SettingsModal from './components/SettingsModal';
+import SearchBar from './components/SearchBar';
+import SortDropdown from './components/SortDropdown';
 
 // Mock data for when Supabase is not connected
+const MOCK_CATEGORIES = [
+  { id: '1', name: 'Psicologia' },
+  { id: '2', name: 'Marketing' },
+  { id: '3', name: 'Business' },
+  { id: '4', name: 'Copywriting' },
+  { id: '5', name: 'Coding' }
+];
+
+const MOCK_TYPES = [
+  { id: '1', name: 'Prompt parziale' },
+  { id: '2', name: 'Prompt template' },
+  { id: '3', name: 'System Prompt' }
+];
+
 const MOCK_PROMPTS = [
   {
     id: '1',
@@ -16,7 +35,8 @@ const MOCK_PROMPTS = [
     content: 'Agisci come un esperto di YouTube. Genera 10 titoli clickbait ma onesti per un video su [ARGOMENTO]. I titoli devono essere sotto i 60 caratteri e includere parole chiave emotive.',
     category: 'Marketing',
     type: 'Prompt template',
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    updated_at: null
   },
   {
     id: '2',
@@ -24,7 +44,8 @@ const MOCK_PROMPTS = [
     content: 'Analizza le seguenti recensioni e categorizzale in Positive, Negative o Neutre. Per ogni categoria, estrai i temi ricorrenti.\n\nRecensioni:\n[INCOLLA RECENSIONI QUI]',
     category: 'Business',
     type: 'System Prompt',
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    updated_at: null
   },
   {
     id: '3',
@@ -32,27 +53,85 @@ const MOCK_PROMPTS = [
     content: 'Spiegami [CONCETTO] come se avessi 5 anni. Usa analogie semplici e vita quotidiana.',
     category: 'Psicologia',
     type: 'Prompt parziale',
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    updated_at: null
   }
 ];
 
 function App() {
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem('bob_authenticated') === 'true';
+  });
+
   const [prompts, setPrompts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [types, setTypes] = useState([]);
+  const [promptTags, setPromptTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('Tutti');
   const [activeType, setActiveType] = useState('Tutti');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [toast, setToast] = useState({ message: '', isVisible: false });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState(null);
 
+  // Settings State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsType, setSettingsType] = useState(null); // 'categories' or 'types'
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
   const isSupabaseConfigured = !supabase.supabaseUrl.includes('your-project');
 
+  // Authentication handlers
+  const handleLogin = (username, password) => {
+    if (username === AUTH_CONFIG.username && password === AUTH_CONFIG.password) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('bob_authenticated', 'true');
+      return true;
+    }
+    return false;
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('bob_authenticated');
+    showToast('Logout effettuato con successo');
+  };
+
   useEffect(() => {
-    fetchPrompts();
-  }, []);
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    await Promise.all([fetchPrompts(), fetchMetadata()]);
+    setLoading(false);
+  };
+
+  const fetchMetadata = async () => {
+    if (isSupabaseConfigured) {
+      const [cats, typs, tags] = await Promise.all([
+        supabase.from('categories').select('*').order('name'),
+        supabase.from('types').select('*').order('name'),
+        supabase.from('prompt_tags').select('*').order('name')
+      ]);
+
+      if (!cats.error) setCategories(cats.data);
+      if (!typs.error) setTypes(typs.data);
+      if (!tags.error) setPromptTags(tags.data);
+    } else {
+      setCategories(MOCK_CATEGORIES);
+      setTypes(MOCK_TYPES);
+      setPromptTags([]);
+    }
+  };
 
   const fetchPrompts = async () => {
-    setLoading(true);
     if (isSupabaseConfigured) {
       const { data, error } = await supabase
         .from('prompts')
@@ -71,7 +150,7 @@ function App() {
         setPrompts(MOCK_PROMPTS);
       }, 500);
     }
-    setLoading(false);
+    // setLoading(false); // Handled in fetchData
   };
 
   const showToast = (message) => {
@@ -83,7 +162,7 @@ function App() {
       if (editingPrompt) {
         const { error } = await supabase
           .from('prompts')
-          .update(promptData)
+          .update({ ...promptData, updated_at: new Date().toISOString() })
           .eq('id', editingPrompt.id);
 
         if (!error) {
@@ -107,7 +186,7 @@ function App() {
     } else {
       // Mock save
       if (editingPrompt) {
-        setPrompts(prompts.map(p => p.id === editingPrompt.id ? { ...p, ...promptData } : p));
+        setPrompts(prompts.map(p => p.id === editingPrompt.id ? { ...p, ...promptData, updated_at: new Date().toISOString() } : p));
         showToast('Prompt aggiornato (Mock)');
       } else {
         setPrompts([{ ...promptData, id: crypto.randomUUID(), created_at: new Date().toISOString() }, ...prompts]);
@@ -141,23 +220,139 @@ function App() {
     }
   };
 
+  const handleToggleFavorite = async (promptId, currentState) => {
+    if (isSupabaseConfigured) {
+      const { error } = await supabase
+        .from('prompts')
+        .update({ is_favorite: !currentState })
+        .eq('id', promptId);
+
+      if (!error) {
+        fetchPrompts();
+        showToast(currentState ? 'Rimosso dai preferiti' : 'Aggiunto ai preferiti');
+      } else {
+        showToast('Errore durante l\'aggiornamento');
+      }
+    } else {
+      setPrompts(prompts.map(p =>
+        p.id === promptId ? { ...p, is_favorite: !p.is_favorite } : p
+      ));
+      showToast(currentState ? 'Rimosso dai preferiti (Mock)' : 'Aggiunto ai preferiti (Mock)');
+    }
+  };
+
+  // Settings Handlers
+  const handleAddMetadata = async (name) => {
+    setSettingsLoading(true);
+    const table = settingsType === 'categories' ? 'categories' : settingsType === 'types' ? 'types' : 'prompt_tags';
+
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.from(table).insert([{ name }]);
+      if (!error) {
+        const itemType = settingsType === 'categories' ? 'Categoria' : settingsType === 'types' ? 'Tipologia' : 'Prompt Tag';
+        showToast(`${itemType} aggiunta`);
+        fetchMetadata();
+      } else {
+        showToast('Errore durante l\'aggiunta');
+      }
+    } else {
+      const newItem = { id: crypto.randomUUID(), name };
+      if (settingsType === 'categories') setCategories([...categories, newItem]);
+      else if (settingsType === 'types') setTypes([...types, newItem]);
+      else setPromptTags([...promptTags, newItem]);
+      const itemType = settingsType === 'categories' ? 'Categoria' : settingsType === 'types' ? 'Tipologia' : 'Prompt Tag';
+      showToast(`${itemType} aggiunta (Mock)`);
+    }
+    setSettingsLoading(false);
+  };
+
+  const handleDeleteMetadata = async (id) => {
+    if (!window.confirm('Sei sicuro?')) return;
+
+    setSettingsLoading(true);
+    const table = settingsType === 'categories' ? 'categories' : settingsType === 'types' ? 'types' : 'prompt_tags';
+
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.from(table).delete().eq('id', id);
+      if (!error) {
+        showToast('Elemento eliminato');
+        fetchMetadata();
+      } else {
+        showToast('Errore durante l\'eliminazione');
+      }
+    } else {
+      if (settingsType === 'categories') setCategories(categories.filter(c => c.id !== id));
+      else if (settingsType === 'types') setTypes(types.filter(t => t.id !== id));
+      else setPromptTags(promptTags.filter(tag => tag.id !== id));
+      showToast('Elemento eliminato (Mock)');
+    }
+    setSettingsLoading(false);
+  };
+
+  // Filter prompts
   const filteredPrompts = prompts.filter(prompt => {
-    const matchCategory = activeCategory === 'Tutti' || prompt.category === activeCategory;
-    const matchType = activeType === 'Tutti' || prompt.type === activeType;
-    return matchCategory && matchType;
+    const categoryMatch = activeCategory === 'Tutti' || prompt.category === activeCategory;
+    const typeMatch = activeType === 'Tutti' || prompt.type === activeType;
+    const searchMatch = searchQuery === '' ||
+      prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      prompt.content.toLowerCase().includes(searchQuery.toLowerCase());
+    return categoryMatch && typeMatch && searchMatch;
   });
 
+  // Sort prompts
+  const sortedPrompts = [...filteredPrompts].sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.created_at) - new Date(a.created_at);
+      case 'oldest':
+        return new Date(a.created_at) - new Date(b.created_at);
+      case 'a-z':
+        return a.title.localeCompare(b.title);
+      case 'z-a':
+        return b.title.localeCompare(a.title);
+      default:
+        return 0;
+    }
+  });
+
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      <Header />
+    <div className="min-h-screen bg-slate-50">
+      <Header
+        onOpenSettings={(type) => {
+          setSettingsType(type);
+          setIsSettingsOpen(true);
+        }}
+        onLogout={handleLogout}
+      />
 
       <CategoryMenu
+        categories={['Tutti', ...categories.map(c => c.name)]}
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
       />
 
       <main className="max-w-4xl mx-auto">
+        <div className="px-4 pt-4 pb-2 flex items-center gap-3">
+          <div className="flex-1">
+            <SearchBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+          </div>
+          <SortDropdown
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+          />
+        </div>
+
         <FilterBar
+          types={['Tutti', ...types.map(t => t.name)]}
           activeType={activeType}
           onSelectType={setActiveType}
         />
@@ -168,32 +363,24 @@ function App() {
               <Loader2 className="w-8 h-8 animate-spin mb-2" />
               <p>Caricamento prompt...</p>
             </div>
-          ) : filteredPrompts.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {filteredPrompts.map(prompt => (
-                <div key={prompt.id} className="relative group/card">
-                  <PromptCard
-                    prompt={prompt}
-                    onCopy={(title) => showToast(`Prompt "${title}" copiato!`)}
-                  />
-                  {/* Edit Button (Visible on hover or always on mobile?) - Let's make it accessible via long press or a small edit icon */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingPrompt(prompt);
-                      setIsModalOpen(true);
-                    }}
-                    className="absolute top-3 right-3 p-1.5 bg-white/80 backdrop-blur rounded-full shadow-sm opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 z-10"
-                    title="Modifica"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                  </button>
-                </div>
-              ))}
+          ) : sortedPrompts.length === 0 ? (
+            <div className="text-center py-20 text-slate-400">
+              <p className="text-lg mb-2">Nessun prompt trovato</p>
+              <p className="text-sm">Prova a modificare i filtri o la ricerca</p>
             </div>
           ) : (
-            <div className="text-center py-20 text-slate-400">
-              <p>Nessun prompt trovato.</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {sortedPrompts.map(prompt => (
+                <PromptCard
+                  key={prompt.id}
+                  prompt={prompt}
+                  onCopy={(title) => showToast(`Prompt "${title}" copiato!`)}
+                  onEdit={(prompt) => {
+                    setEditingPrompt(prompt);
+                    setIsModalOpen(true);
+                  }}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -219,6 +406,19 @@ function App() {
         onSave={handleSavePrompt}
         onDelete={handleDeletePrompt}
         initialData={editingPrompt}
+        categories={categories.map(c => c.name)}
+        types={types.map(t => t.name)}
+        promptTags={promptTags}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        title={settingsType === 'categories' ? 'Categorie' : settingsType === 'types' ? 'Tipologie' : 'Prompt Tags'}
+        items={settingsType === 'categories' ? categories : settingsType === 'types' ? types : promptTags}
+        onAddItem={handleAddMetadata}
+        onDeleteItem={handleDeleteMetadata}
+        isLoading={settingsLoading}
       />
 
       <Toast

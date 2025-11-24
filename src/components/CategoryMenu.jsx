@@ -1,14 +1,12 @@
 import React from 'react';
 import { clsx } from 'clsx';
 
-const CATEGORIES = ['Tutti', 'Psicologia', 'Marketing', 'Business', 'Copywriting', 'Coding'];
-
-export default function CategoryMenu({ activeCategory, onSelectCategory }) {
+export default function CategoryMenu({ categories, activeCategory, onSelectCategory }) {
     return (
         <div className="sticky top-16 z-40 bg-slate-50 border-b border-slate-200 py-3">
             <div className="max-w-4xl mx-auto px-4 overflow-x-auto no-scrollbar">
                 <div className="flex gap-2 min-w-max">
-                    {CATEGORIES.map((cat) => (
+                    {categories.map((cat) => (
                         <button
                             key={cat}
                             onClick={() => onSelectCategory(cat)}

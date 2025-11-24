@@ -1,16 +1,14 @@
 import React from 'react';
 import { Filter } from 'lucide-react';
 
-const TYPES = ['Tutti', 'Prompt parziale', 'Prompt template', 'System Prompt'];
-
-export default function FilterBar({ activeType, onSelectType }) {
+export default function FilterBar({ types, activeType, onSelectType }) {
     return (
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-1 text-slate-400 text-sm font-medium shrink-0">
                 <Filter className="w-4 h-4" />
                 <span>Filtra:</span>
             </div>
-            {TYPES.map((type) => (
+            {types.map((type) => (
                 <button
                     key={type}
                     onClick={() => onSelectType(type)}
