@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus, Trash2, Loader2, Check, Pencil, Save, RotateCcw } from 'lucide-react';
 import { COLOR_PALETTE, DEFAULT_COLOR } from '../lib/constants';
+import { triggerHaptic } from '../lib/utils';
 
 export default function SettingsModal({ isOpen, onClose, title, items, onAddItem, onUpdateItem, onDeleteItem, isLoading }) {
     const [newItemName, setNewItemName] = useState('');
@@ -9,10 +10,16 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
 
     if (!isOpen) return null;
 
+    const handleClose = () => {
+        triggerHaptic('light');
+        onClose();
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!newItemName.trim()) return;
 
+        triggerHaptic('success');
         if (editingItem) {
             // Update existing
             onUpdateItem(editingItem.id, { name: newItemName.trim(), color: selectedColor });
@@ -28,6 +35,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
     };
 
     const startEditing = (item) => {
+        triggerHaptic('light');
         setEditingItem(item);
         setNewItemName(item.name);
 
@@ -41,30 +49,36 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
     };
 
     const cancelEditing = () => {
+        triggerHaptic('light');
         setEditingItem(null);
         setNewItemName('');
         setSelectedColor(DEFAULT_COLOR);
     };
 
+    const handleDelete = (id) => {
+        triggerHaptic('warning');
+        onDeleteItem(id);
+    };
+
     return (
         <div
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200"
-            onClick={onClose}
+            className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={handleClose}
         >
             <div
-                className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
+                className="bg-white w-full sm:rounded-2xl rounded-t-2xl shadow-xl sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
                     <h2 className="text-lg font-bold text-slate-800">
                         {editingItem ? `Modifica ${title.slice(0, -1)}` : `Gestisci ${title}`}
                     </h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+                    <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 hover:bg-slate-200 rounded-full">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto">
                     <form onSubmit={handleSubmit} className="mb-6 space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
                         <div className="flex gap-2">
                             <input
@@ -89,7 +103,6 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                     type="button"
                                     onClick={cancelEditing}
                                     className="bg-white border border-slate-200 text-slate-500 hover:bg-slate-100 p-2 rounded-lg transition-colors shrink-0"
-                                    title="Annulla Modifica"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
@@ -108,7 +121,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                     <button
                                         key={color.id}
                                         type="button"
-                                        onClick={() => setSelectedColor(color)}
+                                        onClick={() => { triggerHaptic('light'); setSelectedColor(color); }}
                                         className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${color.bg} ${selectedColor.id === color.id
                                             ? 'border-slate-800 scale-110 shadow-sm'
                                             : 'border-transparent hover:scale-105'
@@ -142,8 +155,8 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                     <div
                                         key={item.id || item.name}
                                         className={`flex items-center justify-between p-3 rounded-lg group transition-all border ${isEditingThis
-                                                ? 'bg-indigo-50 border-indigo-200 shadow-sm'
-                                                : 'bg-white border-slate-100 hover:shadow-sm hover:border-indigo-100'
+                                            ? 'bg-indigo-50 border-indigo-200 shadow-sm'
+                                            : 'bg-white border-slate-100 hover:shadow-sm hover:border-indigo-100'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
@@ -162,7 +175,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                                 <Pencil className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => onDeleteItem(item.id || item)}
+                                                onClick={() => handleDelete(item.id || item)}
                                                 className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors"
                                                 title="Elimina"
                                             >
