@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Loader2 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { AUTH_CONFIG } from './auth.config';
+import { COLOR_PALETTE, DEFAULT_COLOR } from './lib/constants';
 import Login from './components/Login';
 import Header from './components/Header';
 import CategoryMenu from './components/CategoryMenu';
@@ -15,17 +16,17 @@ import SortDropdown from './components/SortDropdown';
 
 // Mock data for when Supabase is not connected
 const MOCK_CATEGORIES = [
-  { id: '1', name: 'Psicologia' },
-  { id: '2', name: 'Marketing' },
-  { id: '3', name: 'Business' },
-  { id: '4', name: 'Copywriting' },
-  { id: '5', name: 'Coding' }
+  { id: '1', name: 'Psicologia', color: COLOR_PALETTE[8] }, // Purple
+  { id: '2', name: 'Marketing', color: COLOR_PALETTE[1] }, // Red
+  { id: '3', name: 'Business', color: COLOR_PALETTE[6] }, // Blue
+  { id: '4', name: 'Copywriting', color: COLOR_PALETTE[2] }, // Orange
+  { id: '5', name: 'Coding', color: COLOR_PALETTE[5] } // Teal
 ];
 
 const MOCK_TYPES = [
-  { id: '1', name: 'Prompt parziale' },
-  { id: '2', name: 'Prompt template' },
-  { id: '3', name: 'System Prompt' }
+  { id: '1', name: 'Prompt parziale', color: COLOR_PALETTE[3] }, // Amber
+  { id: '2', name: 'Prompt template', color: COLOR_PALETTE[5] }, // Teal
+  { id: '3', name: 'System Prompt', color: COLOR_PALETTE[0] } // Slate
 ];
 
 const MOCK_PROMPTS = [
@@ -242,26 +243,72 @@ function App() {
   };
 
   // Settings Handlers
-  const handleAddMetadata = async (name) => {
+  const handleAddMetadata = async (newItem) => {
     setSettingsLoading(true);
     const table = settingsType === 'categories' ? 'categories' : settingsType === 'types' ? 'types' : 'prompt_tags';
 
+    // Deconstruct item (handle both object with color and simple string legacy if any)
+    const name = typeof newItem === 'object' ? newItem.name : newItem;
+    const color = typeof newItem === 'object' ? newItem.color : null;
+
     if (isSupabaseConfigured) {
-      const { error } = await supabase.from(table).insert([{ name }]);
+      // Note: Backend schema might need 'color' column. For now we try to insert.
+      const payload = { name };
+      if (color) payload.color = color;
+
+      const { error } = await supabase.from(table).insert([payload]);
       if (!error) {
         const itemType = settingsType === 'categories' ? 'Categoria' : settingsType === 'types' ? 'Tipologia' : 'Prompt Tag';
         showToast(`${itemType} aggiunta`);
         fetchMetadata();
       } else {
         showToast('Errore durante l\'aggiunta');
+        console.error(error);
       }
     } else {
-      const newItem = { id: crypto.randomUUID(), name };
-      if (settingsType === 'categories') setCategories([...categories, newItem]);
-      else if (settingsType === 'types') setTypes([...types, newItem]);
-      else setPromptTags([...promptTags, newItem]);
+      const item = { id: crypto.randomUUID(), name, color: color || DEFAULT_COLOR };
+      if (settingsType === 'categories') setCategories([...categories, item]);
+      else if (settingsType === 'types') setTypes([...types, item]);
+      else setPromptTags([...promptTags, item]);
       const itemType = settingsType === 'categories' ? 'Categoria' : settingsType === 'types' ? 'Tipologia' : 'Prompt Tag';
       showToast(`${itemType} aggiunta (Mock)`);
+    }
+    setSettingsLoading(false);
+  };
+
+  const handleUpdateMetadata = async (id, updatedItem) => {
+    setSettingsLoading(true);
+    const table = settingsType === 'categories' ? 'categories' : settingsType === 'types' ? 'types' : 'prompt_tags';
+
+    // updatedItem contains { name, color }
+    const payload = {
+      name: updatedItem.name,
+      color: updatedItem.color
+    };
+
+    if (isSupabaseConfigured) {
+      const { error } = await supabase
+        .from(table)
+        .update(payload)
+        .eq('id', id);
+
+      if (!error) {
+        showToast('Elemento aggiornato');
+        fetchMetadata();
+      } else {
+        showToast('Errore durante l\'aggiornamento');
+      }
+    } else {
+      // Mock Update
+      const updateList = (list) => list.map(item =>
+        item.id === id ? { ...item, ...payload } : item
+      );
+
+      if (settingsType === 'categories') setCategories(updateList(categories));
+      else if (settingsType === 'types') setTypes(updateList(types));
+      else setPromptTags(updateList(promptTags));
+
+      showToast('Elemento aggiornato (Mock)');
     }
     setSettingsLoading(false);
   };
@@ -332,7 +379,7 @@ function App() {
       />
 
       <CategoryMenu
-        categories={['Tutti', ...categories.map(c => c.name)]}
+        categories={[{ name: 'Tutti', color: null }, ...categories]}
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
       />
@@ -352,7 +399,7 @@ function App() {
         </div>
 
         <FilterBar
-          types={['Tutti', ...types.map(t => t.name)]}
+          types={[{ name: 'Tutti', color: null }, ...types]}
           activeType={activeType}
           onSelectType={setActiveType}
         />
@@ -374,11 +421,14 @@ function App() {
                 <PromptCard
                   key={prompt.id}
                   prompt={prompt}
+                  categories={categories}
+                  types={types}
                   onCopy={(title) => showToast(`Prompt "${title}" copiato!`)}
                   onEdit={(prompt) => {
                     setEditingPrompt(prompt);
                     setIsModalOpen(true);
                   }}
+                  onToggleFavorite={handleToggleFavorite}
                 />
               ))}
             </div>
@@ -417,6 +467,7 @@ function App() {
         title={settingsType === 'categories' ? 'Categorie' : settingsType === 'types' ? 'Tipologie' : 'Prompt Tags'}
         items={settingsType === 'categories' ? categories : settingsType === 'types' ? types : promptTags}
         onAddItem={handleAddMetadata}
+        onUpdateItem={handleUpdateMetadata}
         onDeleteItem={handleDeleteMetadata}
         isLoading={settingsLoading}
       />

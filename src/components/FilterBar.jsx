@@ -1,5 +1,6 @@
 import React from 'react';
 import { Filter } from 'lucide-react';
+import { DEFAULT_COLOR } from '../lib/constants';
 
 export default function FilterBar({ types, activeType, onSelectType }) {
     return (
@@ -8,18 +9,26 @@ export default function FilterBar({ types, activeType, onSelectType }) {
                 <Filter className="w-4 h-4" />
                 <span>Filtra:</span>
             </div>
-            {types.map((type) => (
-                <button
-                    key={type}
-                    onClick={() => onSelectType(type)}
-                    className={`text-xs px-3 py-1.5 rounded-md border transition-colors shrink-0 ${activeType === type
-                            ? 'bg-violet-100 border-violet-200 text-violet-700 font-medium'
+            {types.map((type) => {
+                const isSelected = activeType === type.name;
+                const color = type.color || DEFAULT_COLOR;
+                const isAll = type.name === 'Tutti';
+
+                return (
+                    <button
+                        key={type.name}
+                        onClick={() => onSelectType(type.name)}
+                        className={`text-xs px-3 py-1.5 rounded-md border transition-all duration-200 shrink-0 ${isSelected
+                            ? isAll
+                                ? 'bg-slate-800 text-white border-transparent'
+                                : `${color.bg} ${color.text} ${color.border} font-bold shadow-sm`
                             : 'bg-transparent border-slate-200 text-slate-500 hover:border-slate-300'
-                        }`}
-                >
-                    {type}
-                </button>
-            ))}
+                            }`}
+                    >
+                        {type.name}
+                    </button>
+                );
+            })}
         </div>
     );
 }

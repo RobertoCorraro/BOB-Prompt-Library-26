@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
 import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star } from 'lucide-react';
+import { DEFAULT_COLOR } from '../lib/constants';
 
-export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite }) {
+export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, categories = [], types = [] }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
+
+    // Lookup colors
+    const categoryObj = categories.find(c => c.name === prompt.category) || { color: DEFAULT_COLOR };
+    const typeObj = types.find(t => t.name === prompt.type) || { color: DEFAULT_COLOR };
+
+    // Safety check if color is stored directly or as an object (handle both defaults)
+    const catColor = categoryObj.color || DEFAULT_COLOR;
+    const typeColor = typeObj.color || DEFAULT_COLOR;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(prompt.content);
@@ -41,7 +50,7 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite })
                                 className={`w-5 h-5 ${prompt.is_favorite ? 'fill-yellow-500 text-yellow-500' : ''}`}
                             />
                         </button>
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
+                        <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md ${catColor.bg} ${catColor.text} ${catColor.border} border`}>
                             {prompt.category}
                         </span>
                     </div>
@@ -57,7 +66,7 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite })
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 mt-4 text-xs text-slate-400 font-medium">
-                    <div className="flex items-center gap-1">
+                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${typeColor.bg} ${typeColor.text} border ${typeColor.border}`}>
                         <Tag className="w-3 h-3" />
                         <span>{prompt.type}</span>
                     </div>
@@ -71,7 +80,7 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite })
                             <div className="w-1 h-1 rounded-full bg-slate-300" />
                             <div className="flex items-center gap-1" title="Ultima modifica">
                                 <RefreshCw className="w-3 h-3" />
-                                <span>{new Date(prompt.updated_at).toLocaleDateString()}</span>
+                                <span className="text-slate-400">{new Date(prompt.updated_at).toLocaleDateString()}</span>
                             </div>
                         </>
                     )}
