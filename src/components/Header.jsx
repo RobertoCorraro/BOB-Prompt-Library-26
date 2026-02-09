@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Settings, LogOut, Moon, Sun } from 'lucide-react';
+import { Search, Settings, LogOut, Moon, Sun, Heart } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
 
-export default function Header({ onSearch, onSettings, userEmail }) {
+export default function Header({ onSearch, onSettings, userEmail, showFavorites, onToggleFavorites }) {
     const [isDark, setIsDark] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -49,6 +49,18 @@ export default function Header({ onSearch, onSettings, userEmail }) {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Favorites Toggle */}
+                    <button
+                        onClick={onToggleFavorites}
+                        className={`p-2 rounded-full transition-colors ${showFavorites
+                                ? 'text-rose-500 bg-rose-50 dark:bg-rose-900/20'
+                                : 'text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-800'
+                            }`}
+                        title={showFavorites ? "Mostra tutti" : "Mostra solo preferiti"}
+                    >
+                        <Heart className={`w-5 h-5 ${showFavorites ? 'fill-current' : ''}`} />
+                    </button>
+
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}

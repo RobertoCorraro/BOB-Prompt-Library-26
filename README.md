@@ -51,11 +51,22 @@
 - **Ordinamento Avanzato**: Per data, alfabetico (A-Z, Z-A)
 
 ### 🎨 User Experience
-- **Copia con un Click**: Copia i prompt negli appunti istantaneamente
-- **Toast Notifications**: Feedback visivo per ogni azione
-- **Modal Responsive**: Form ottimizzati per mobile e desktop
-- **Filtri Multipli**: Combina categoria, tipo e ricerca
-- **Dark Mode Ready**: Preparato per tema scuro
+- **Organizzazione Intelligente**:
+  - 📂 **Categorie** (es. Marketing, Coding, Psicologia)
+  - 🏷️ **Tag Multipli** per una classificazione granulare
+  - 🎨 **Tipologie** codificate a colori (es. One-shot, Template)
+  - ❤️ **Preferiti** per accesso rapido ai prompt più utili
+
+- **Editor Potente**:
+  - ✏️ Editor con **Zen Mode** (Schermo Intero) per zero distrazioni
+  - 🔄 **Cronologia Revisioni**: salva versioni, confronta e ripristina
+  - 🧩 **Variabili Dinamiche** (es. `{{target}}`) rilevate automaticamente
+  - 📋 Modalità di **Compilazione Rapida** per testare i prompt
+
+- **Interfaccia Moderna**:
+  - 🌙 **Dark Mode** automatica o manuale
+  - ⚡ **Filtri Avanzati** veloci (Tipologia, Tag, Ricerca)
+  - 📱 **Mobile Optimized**: menu laterale, layout responsivo e gesture friendly
 
 ### ☁️ Cloud & Sincronizzazione
 - **Supabase Integration**: Database PostgreSQL cloud-based

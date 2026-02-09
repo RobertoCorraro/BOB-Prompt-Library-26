@@ -79,6 +79,7 @@ export default function App() {
   const [selectedTags, setSelectedTags] = useState([]); // Array of strings
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [showFavorites, setShowFavorites] = useState(false);
 
   // Modals State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -98,6 +99,16 @@ export default function App() {
     prompt: null,
     variables: []
   });
+
+  // Toast State
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  useEffect(() => {
+    if (toast.show) {
+      const timer = setTimeout(() => setToast({ ...toast, show: false }), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.show]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -170,8 +181,13 @@ export default function App() {
   };
 
   // Prompt Handlers
-  const handleCopy = (text) => {
-    // navigator.clipboard.writeText(text); // Handled in PromptCard
+  const handleCopy = (title) => {
+    triggerHaptic('success');
+    setToast({
+      show: true,
+      message: `"${title}" copiato!`,
+      type: 'success'
+    });
   };
 
   const handleDelete = async (id) => {
@@ -348,6 +364,11 @@ export default function App() {
         onSearch={setSearchQuery}
         onSettings={() => setIsSidebarOpen(true)}
         userEmail={session?.user?.email || 'User'}
+        showFavorites={showFavorites}
+        onToggleFavorites={() => {
+          triggerHaptic('light');
+          setShowFavorites(!showFavorites);
+        }}
       />
 
       <main className="max-w-7xl mx-auto transition-all duration-300">
@@ -357,12 +378,13 @@ export default function App() {
           onSelectCategory={setActiveCategory}
         />
 
-        <FilterBar
-          types={[{ id: 'all', name: 'Tutti', color: { bg: 'bg-white', text: 'text-slate-600' } }, ...types]}
-          activeType={activeType}
-          onSelectType={setActiveType}
-        />
-
+        <div className="hidden md:block">
+          <FilterBar
+            types={[{ id: 'all', name: 'Tutti', color: { bg: 'bg-white', text: 'text-slate-600' } }, ...types]}
+            activeType={activeType}
+            onSelectType={(t) => setActiveType(typeof t === 'string' ? t : t.name)}
+          />
+        </div>
         <div className="px-4 py-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-slate-800 dark:text-white">
@@ -463,6 +485,8 @@ export default function App() {
         tags={tags}
         selectedTags={selectedTags}
         onSelectTags={setSelectedTags}
+        showFavorites={showFavorites}
+        onToggleFavorites={() => setShowFavorites(!showFavorites)}
       />
 
       <AdminModal
@@ -502,6 +526,19 @@ export default function App() {
         prompt={compileModal.prompt}
         variables={compileModal.variables}
       />
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-slate-900 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {toast.type === 'success' ? (
+            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          ) : null}
+          <span className="font-medium text-sm">{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 }
