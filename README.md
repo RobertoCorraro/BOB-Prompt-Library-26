@@ -14,7 +14,7 @@
 [Caratteristiche](#-caratteristiche) •
 [Demo](#-demo) •
 [Installazione](#-installazione-rapida) •
-[Documentazione](#-documentazione) •
+[Guida Tecnica](./GUIDA_TECNICA.md) •
 [Deploy](#-deployment)
 
 </div>
