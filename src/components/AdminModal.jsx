@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Braces, History, RotateCcw, Clock, Maximize2, Minimize2 } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
 import { DEFAULT_COLOR } from '../lib/constants';
+import { supabase } from '../lib/supabase';
 
 export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialData, categories, types, promptTags, revisions = [] }) {
     const [formData, setFormData] = useState({
@@ -43,10 +44,33 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
         onClose();
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         triggerHaptic('success');
-        onSave(formData, false); // Standard save
+
+        try {
+            const { data, error } = await supabase.from('prompts').insert([
+                {
+                    title: formData.title,
+                    content: formData.content,
+                    category: formData.category,
+                    type: formData.type,
+                    tags: formData.tags,
+                },
+            ]);
+
+            if (error) {
+                console.error('Errore durante il salvataggio:', error);
+                alert('Errore durante il salvataggio del prompt.');
+            } else {
+                console.log('Prompt salvato con successo:', data);
+                alert('Prompt salvato con successo!');
+                onSave(formData, false); // Standard save
+            }
+        } catch (err) {
+            console.error('Errore imprevisto:', err);
+            alert('Si è verificato un errore imprevisto.');
+        }
     };
 
     const handleSaveRevision = () => {
@@ -113,8 +137,8 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
         >
             <div
                 className={`bg-white w-full sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 transition-all ${isFullscreen
-                        ? 'h-full sm:h-full max-w-none rounded-none sm:rounded-none'
-                        : 'sm:max-w-lg max-h-[90vh]'
+                    ? 'h-full sm:h-full max-w-none rounded-none sm:rounded-none'
+                    : 'sm:max-w-lg max-h-[90vh]'
                     }`}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -129,8 +153,8 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                             <button
                                 onClick={() => setShowHistory(!showHistory)}
                                 className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium ${showHistory
-                                        ? 'bg-indigo-100 text-indigo-700'
-                                        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                                    ? 'bg-indigo-100 text-indigo-700'
+                                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                                     }`}
                                 title="Storico Revisioni"
                             >
@@ -142,8 +166,8 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                         <button
                             onClick={() => setIsFullscreen(!isFullscreen)}
                             className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium ${isFullscreen
-                                    ? 'bg-indigo-100 text-indigo-700'
-                                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                                 }`}
                             title={isFullscreen ? "Riduci" : "Schermo Intero"}
                         >
@@ -208,8 +232,8 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                                     type="button"
                                                     onClick={() => toggleTag(tag)}
                                                     className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all border ${isSelected
-                                                            ? 'bg-indigo-100 text-indigo-700 border-indigo-300'
-                                                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-200 hover:text-indigo-600'
+                                                        ? 'bg-indigo-100 text-indigo-700 border-indigo-300'
+                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-200 hover:text-indigo-600'
                                                         }`}
                                                 >
                                                     {tag}

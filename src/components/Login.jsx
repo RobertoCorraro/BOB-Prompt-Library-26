@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, Lock, User, AlertCircle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export default function Login({ onLogin }) {
     const [username, setUsername] = useState('');
@@ -12,14 +13,20 @@ export default function Login({ onLogin }) {
         setError('');
         setIsLoading(true);
 
-        // Simulate a small delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email: username,
+                password: password,
+            });
 
-        const success = onLogin(username, password);
-
-        if (!success) {
-            setError('Credenziali non valide. Riprova.');
-            setPassword('');
+            if (error) {
+                setError('Credenziali non valide. Riprova.');
+                setPassword('');
+            } else {
+                onLogin(username, password);
+            }
+        } catch (err) {
+            setError('Si è verificato un errore. Riprova più tardi.');
         }
 
         setIsLoading(false);
