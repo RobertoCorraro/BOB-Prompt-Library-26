@@ -61,10 +61,52 @@ Ecco cosa succede dall'inizio alla fine quando fai una modifica:
 
 ---
 
-## 💡 Consigli per la Manutenzione
+## �️ 4. Tutorial: Come creare e pubblicare la tua prossima App (Step-by-Step)
 
-*   **Cambio Password**: Se vuoi cambiare la password di accesso, modificala semplicemente in `src/auth.config.js` e fai un `push`.
+Se vuoi creare un nuovo progetto simile a questo, segui questa "ricetta" collaudata.
+
+### Fase 1: Creazione e Sviluppo Locale
+1.  **Inizia il progetto**: Apri il terminale e scrivi `npm create vite@latest mia-nuova-app -- --template react`.
+2.  **Entra e installa**: `cd mia-nuova-app` e poi `npm install`.
+3.  **Installa Supabase**: `npm install @supabase/supabase-js`.
+4.  **Configura Vite**: Apri `vite.config.js` e aggiungi `base: '/nome-tuo-repo/'`.
+5.  **Crea il file .env**: Crea un file `.env` con `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+
+### Fase 2: Configurazione Supabase
+1.  **Crea Progetto**: Vai sul dashboard di Supabase e crea un nuovo database.
+2.  **Schema SQL**: Usa l'SQL Editor per creare le tabelle (puoi trarre ispirazione dallo `schema.sql` di questo progetto).
+3.  **RLS**: Attiva la Row Level Security e crea le "Policies" (i permessi di lettura/scrittura).
+
+### Fase 3: Preparazione GitHub
+1.  **Crea Repository**: Crea un nuovo repo vuoto su GitHub.
+2.  **Carica il codice**: 
+    ```bash
+    git init
+    git add .
+    git commit -m "Primo commit"
+    git branch -M main
+    git remote add origin https://github.com/tuo-username/mia-nuova-app.git
+    git push -u origin main
+    ```
+3.  **Imposta i Secrets**: Vai in *Settings -> Secrets and variables -> Actions* del tuo repository e aggiungi `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+
+### Fase 4: Il Lancio (Deploy)
+1.  **Crea l'Automazione**: Crea la cartella `.github/workflows/` e inserisci il file `deploy.yml` (puoi copiare quello di questo progetto).
+2.  **Attiva Pages**: 
+    *   Vai su GitHub in *Settings -> Pages*.
+    *   Sotto "Build and deployment", imposta **Source** su **GitHub Actions**.
+3.  **Lancio**: Fai un `git push`. Il robot partirà in automatico!
+
+---
+
+## 💡 Consigli per la Manutenzione
+Ogni volta che vuoi fare una modifica (cambiare un colore, aggiungere un tasto):
+1.  Lavora sul tuo computer.
+2.  Controlla che funzioni con `npm run dev`.
+3.  Quando sei pronto, fai un **Commit** e un **Push**.
+4.  Attendi 2 minuti e la tua app online si aggiornerà da sola grazie al robot di GitHub Actions!
+
 *   **Database**: Puoi sempre vedere e modificare i tuoi prompt direttamente dal dashboard di Supabase (Table Editor).
 *   **Logs**: Se qualcosa non va, premi **F12** nel browser e guarda la "Console". Se vedi scritte in rosso, lì c'è la risposta al problema.
 
-**BOB Prompt Library** è ora un sistema solido e automatizzato. Buon lavoro! 🚀
+Buon divertimento con la tua nuova **BOB Prompt Library**! 🚀
