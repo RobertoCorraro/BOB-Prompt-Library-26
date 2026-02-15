@@ -255,19 +255,23 @@ rm -rf node_modules package-lock.json && npm install
 
 ## 📦 Deployment
 
-### Vercel (Consigliato)
+### GitHub Pages (via GitHub Actions)
 
-```bash
-# 1. Installa Vercel CLI
-npm i -g vercel
+Il progetto è configurato per il deployment automatico su GitHub Pages tramite GitHub Actions.
 
-# 2. Deploy
-vercel
+1.  **Configurazione Repository**:
+    *   Vai in **Settings** → **Pages**.
+    *   Sotto **Build and deployment** → **Source**, seleziona **GitHub Actions**.
 
-# 3. Configura variabili d'ambiente su Vercel Dashboard
-# VITE_SUPABASE_URL
-# VITE_SUPABASE_ANON_KEY
-```
+2.  **Variabili d'Ambiente (Secrets)**:
+    *   Vai in **Settings** → **Secrets and variables** → **Actions**.
+    *   Aggiungi i seguenti repository secrets:
+        *   `VITE_SUPABASE_URL`: Il tuo URL di Supabase.
+        *   `VITE_SUPABASE_ANON_KEY`: La tua chiave anonima di Supabase.
+
+3.  **Deploy**:
+    *   Ad ogni push sul branch `main`, il workflow `.github/workflows/deploy.yml` buildera l'app e la pubblicherà automaticamente.
+
 
 ### Netlify
 
