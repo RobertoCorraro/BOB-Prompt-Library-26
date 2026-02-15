@@ -6,6 +6,7 @@ create table prompts (
   category text not null, -- 'Psicologia', 'Marketing', 'Business', etc.
   type text not null, -- 'Prompt parziale', 'Prompt template', 'System Prompt', etc.
   is_favorite boolean default false,
+  tags text[] default '{}',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now())
 );

@@ -142,6 +142,7 @@ export default function App() {
     try {
       setLoading(true);
 
+      // Fetch Prompts
       const { data: promptsData, error: promptsError } = await supabase
         .from('prompts')
         .select('*')
@@ -149,13 +150,31 @@ export default function App() {
 
       if (promptsError) throw promptsError;
 
-      if (promptsData) {
-        setPrompts(promptsData);
-        // In a real app we would fetch categories/types/tags here
-        setCategories(MOCK_CATEGORIES);
-        setTypes(MOCK_TYPES);
-        setTags(MOCK_TAGS);
-      }
+      // Fetch Categories
+      const { data: catData, error: catError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      // Fetch Types
+      const { data: typeData, error: typeError } = await supabase
+        .from('types')
+        .select('*')
+        .order('name');
+
+      // Fetch Tags
+      const { data: tagData, error: tagError } = await supabase
+        .from('prompt_tags')
+        .select('*')
+        .order('name');
+
+      if (promptsData) setPrompts(promptsData);
+
+      // Fallback to mock only if DB tables are empty
+      setCategories(catData?.length > 0 ? catData : MOCK_CATEGORIES);
+      setTypes(typeData?.length > 0 ? typeData : MOCK_TYPES);
+      setTags(tagData?.length > 0 ? tagData : MOCK_TAGS);
+
     } catch (error) {
       console.error('Error fetching data:', error);
       loadMockData();
@@ -169,6 +188,7 @@ export default function App() {
     if (username === AUTH_CONFIG.username && password === AUTH_CONFIG.password) {
       setIsAuthenticated(true);
       sessionStorage.setItem('bob_authenticated', 'true');
+      fetchData(); // Trigger fetch on local login too
       return true;
     }
     return false;
