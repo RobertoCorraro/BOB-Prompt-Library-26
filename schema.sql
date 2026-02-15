@@ -14,12 +14,21 @@ create table prompts (
 -- Enable Row Level Security (RLS)
 alter table prompts enable row level security;
 
--- Create a policy that allows everyone to read prompts
+-- ==========================================================
+-- 🛡️ SECURITY WARNING: DEMO POLICIES
+-- The policies below are OPEN to facilitate testing and demo.
+-- In a production environment, you should restrict access.
+-- ==========================================================
+
+-- 1. READ POLICY: Allows anyone to see prompts
 create policy "Enable read access for all users" on prompts
   for select using (true);
 
--- Create a policy that allows authenticated users (or everyone if you prefer open access for this demo) to insert/update/delete
--- For this demo, we'll allow everyone to insert/update/delete to make the admin panel work without auth implementation details
+-- 2. WRITE POLICIES: ⚠️ CAUTION
+-- These allow anyone with the ANON_KEY to insert, update, or delete.
+-- TO SECURE: Change 'with check (true)' to 'with check (auth.role() = 'authenticated')'
+-- if you enable Supabase Auth.
+
 create policy "Enable write access for all users" on prompts
   for insert with check (true);
 
@@ -28,6 +37,12 @@ create policy "Enable update access for all users" on prompts
 
 create policy "Enable delete access for all users" on prompts
   for delete using (true);
+
+-- 💡 PRODUCTION TIP:
+-- If you want only the owner to see/edit their prompts, use:
+-- for select using (auth.uid() = user_id);
+-- (This requires adding a user_id column to the table)
+
 
 -- Categories Table
 create table categories (
