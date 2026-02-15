@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star, Braces, Zap } from 'lucide-react';
+import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star, Braces, Zap, Type } from 'lucide-react';
 import { DEFAULT_COLOR } from '../lib/constants';
 import { extractVariables, triggerHaptic } from '../lib/utils';
 
