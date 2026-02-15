@@ -119,23 +119,21 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, o
 
                     {/* Type */}
                     <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${typeColor.bg} ${typeColor.text} ${typeColor.border} dark:bg-opacity-20 dark:border-opacity-30`}>
-                        <Tag className="w-3 h-3" />
+                        <Type className="w-3 h-3" />
                         <span>{prompt.type}</span>
                     </div>
 
                     {/* Tags */}
                     {prompt.tags && prompt.tags.length > 0 && (
                         <div className="flex items-center gap-2 border-l border-slate-200 dark:border-slate-700 pl-3">
-                            {prompt.tags.map(tagName => {
-                                // Lookup tag color (naive lookup for now since tags prop in PromptCard is types/categories focused. Need to pass tags list or just use default style)
-                                // Let's simplify: Use a subtle style or try to find color if possible. 
-                                // Actually I can pass 'tags' list to PromptCard in next step. For now use default style.
-                                return (
+                            <Tag className="w-3 h-3 text-slate-400" />
+                            <div className="flex flex-wrap gap-1">
+                                {prompt.tags.map(tagName => (
                                     <span key={tagName} className="text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px]">
                                         #{tagName}
                                     </span>
-                                );
-                            })}
+                                ))}
+                            </div>
                         </div>
                     )}
 

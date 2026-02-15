@@ -361,7 +361,9 @@ export default function App() {
     const matchesTags = selectedTags.length === 0 || selectedTags.every(tag => (prompt.tags || []).includes(tag));
     const matchesSearch = (prompt.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (prompt.content?.toLowerCase() || '').includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesType && matchesTags && matchesSearch;
+    const matchesFavorites = !showFavorites || prompt.is_favorite;
+
+    return matchesCategory && matchesType && matchesTags && matchesSearch && matchesFavorites;
   });
 
   const isLoggedIn = session || isAuthenticated;
