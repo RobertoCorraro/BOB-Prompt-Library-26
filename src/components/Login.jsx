@@ -14,6 +14,17 @@ export default function Login({ onLogin }) {
         setIsLoading(true);
 
         try {
+            // 1. Try Local Auth first (the ones in auth.config.js)
+            // This ensures the user can always enter with the default credentials
+            const isLocalValid = onLogin(username, password);
+
+            if (isLocalValid) {
+                // Success! The App component handles the rest
+                setIsLoading(false);
+                return;
+            }
+
+            // 2. Fallback/Optional: Try Supabase Auth
             const { error } = await supabase.auth.signInWithPassword({
                 email: username,
                 password: password,
