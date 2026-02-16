@@ -78,7 +78,9 @@ export default function App() {
   const [activeType, setActiveType] = useState('Tutti');
   const [selectedTags, setSelectedTags] = useState([]); // Array of strings
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [viewMode, setViewMode] = useState(() => {
+    return localStorage.getItem('bob_view_mode') || 'grid';
+  }); // 'grid' | 'list'
   const [showFavorites, setShowFavorites] = useState(false);
 
   // Modals State
@@ -110,19 +112,35 @@ export default function App() {
     }
   }, [toast.show]);
 
+  // Persist View Mode
+  useEffect(() => {
+    localStorage.setItem('bob_view_mode', viewMode);
+  }, [viewMode]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchData();
-      else loadMockData();
+      // Fetch if we have a supabase session OR if we are locally authenticated (assuming anon access)
+      if (session || sessionStorage.getItem('bob_authenticated') === 'true') {
+        fetchData();
+      } else {
+        // Only load mock data if we are strictly NOT authenticated
+        // loadMockData(); 
+        // Actually, let's wait for user to login. 
+        // If we want to show demo data only on landing page for non-auth users:
+        loadMockData();
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchData();
-      else loadMockData();
+      if (session || sessionStorage.getItem('bob_authenticated') === 'true') {
+        fetchData();
+      } else {
+        loadMockData();
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -177,7 +195,10 @@ export default function App() {
 
     } catch (error) {
       console.error('Error fetching data:', error);
-      loadMockData();
+      // Do NOT fallback to mock data on error, it confuses the user. 
+      // Instead, we might show an error toast or empty state.
+      setToast({ show: true, message: 'Errore nel caricamento dei dati', type: 'error' });
+      // loadMockData(); 
     } finally {
       setLoading(false);
     }
@@ -375,7 +396,7 @@ export default function App() {
   if (loading && prompts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
       </div>
     );
   }
@@ -422,7 +443,7 @@ export default function App() {
                   setViewMode('grid');
                 }}
                 className={`p-1.5 rounded-md transition-all ${viewMode === 'grid'
-                  ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  ? 'bg-white dark:bg-slate-600 text-violet-600 dark:text-violet-400 shadow-sm'
                   : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 title="Vista Griglia"
@@ -435,7 +456,7 @@ export default function App() {
                   setViewMode('list');
                 }}
                 className={`p-1.5 rounded-md transition-all ${viewMode === 'list'
-                  ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  ? 'bg-white dark:bg-slate-600 text-violet-600 dark:text-violet-400 shadow-sm'
                   : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 title="Vista Lista"
@@ -445,7 +466,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className={`grid gap-6 ${viewMode === 'grid'
+          <div className={`grid gap-2 ${viewMode === 'grid'
             ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
             : 'grid-cols-1 max-w-3xl mx-auto'
             }`}>
@@ -487,7 +508,7 @@ export default function App() {
           setModalInitialData(null);
           setIsModalOpen(true);
         }}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-300 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 z-40"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg shadow-violet-300 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 z-40"
       >
         <Plus className="w-7 h-7" />
       </button>

@@ -57,8 +57,8 @@ export default function SettingsSidebar({
                 {/* Header */}
                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
-                            <Sliders className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        <div className="p-1.5 bg-violet-50 dark:bg-violet-900/30 rounded-lg">
+                            <Sliders className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                         </div>
                         <h2 className="text-lg font-bold text-slate-800 dark:text-white">Filtri & Opzioni</h2>
                     </div>
@@ -88,8 +88,8 @@ export default function SettingsSidebar({
                                 onToggleFavorites();
                             }}
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm font-medium border ${showFavorites
-                                    ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900'
-                                    : 'text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900'
+                                : 'text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
                                 }`}
                         >
                             <Heart className={`w-4 h-4 ${showFavorites ? 'fill-current' : ''}`} />
@@ -110,11 +110,11 @@ export default function SettingsSidebar({
                                     onSelectType('Tutti');
                                 }}
                                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm font-medium ${activeType === 'Tutti'
-                                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
+                                    ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'
                                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                                     }`}
                             >
-                                <span className={`w-2 h-2 rounded-full ${activeType === 'Tutti' ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                                <span className={`w-2 h-2 rounded-full ${activeType === 'Tutti' ? 'bg-violet-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
                                 Tutti
                             </button>
                             {types.map(type => {
@@ -156,8 +156,8 @@ export default function SettingsSidebar({
                                             key={tag.id || tag.name}
                                             onClick={() => toggleTagFilter(tag.name)}
                                             className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all border ${isSelected
-                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200'
-                                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700'
+                                                ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200'
+                                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700'
                                                 }`}
                                         >
                                             {isSelected && <span className="mr-1">✓</span>}
@@ -170,7 +170,7 @@ export default function SettingsSidebar({
                         {selectedTags.length > 0 && (
                             <button
                                 onClick={() => onSelectTags([])}
-                                className="mt-3 text-xs text-indigo-600 hover:text-indigo-800 px-2 font-medium"
+                                className="mt-3 text-xs text-violet-600 hover:text-violet-800 px-2 font-medium"
                             >
                                 Resetta filtri tag
                             </button>
@@ -192,7 +192,7 @@ export default function SettingsSidebar({
                             className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors group"
                             title="Gestisci Categorie"
                         >
-                            <FolderTree className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 mb-1" />
+                            <FolderTree className="w-5 h-5 text-slate-400 group-hover:text-violet-500 mb-1" />
                             <span className="text-[10px] text-slate-500 font-medium">Categorie</span>
                         </button>
                         <button
@@ -203,7 +203,7 @@ export default function SettingsSidebar({
                             className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors group"
                             title="Gestisci Tipologie"
                         >
-                            <Type className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 mb-1" />
+                            <Type className="w-5 h-5 text-slate-400 group-hover:text-violet-500 mb-1" />
                             <span className="text-[10px] text-slate-500 font-medium">Tipi</span>
                         </button>
                         <button
@@ -214,7 +214,7 @@ export default function SettingsSidebar({
                             className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors group"
                             title="Gestisci Tag"
                         >
-                            <Tag className="w-5 h-5 text-slate-400 group-hover:text-indigo-500 mb-1" />
+                            <Tag className="w-5 h-5 text-slate-400 group-hover:text-violet-500 mb-1" />
                             <span className="text-[10px] text-slate-500 font-medium">Tag</span>
                         </button>
                     </div>
@@ -222,7 +222,7 @@ export default function SettingsSidebar({
                     {/* Account & Logout */}
                     <div className="p-4">
                         <div className="flex items-center gap-3 mb-4 px-2">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-800 text-xs">
+                            <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900 flex items-center justify-center text-violet-700 dark:text-violet-300 font-bold border border-violet-200 dark:border-violet-800 text-xs">
                                 {userEmail ? userEmail[0].toUpperCase() : 'U'}
                             </div>
                             <div className="flex-1 min-w-0">

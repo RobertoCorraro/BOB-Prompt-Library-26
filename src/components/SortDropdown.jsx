@@ -16,7 +16,7 @@ export default function SortDropdown({ sortBy, onSortChange }) {
                 <select
                     value={sortBy}
                     onChange={(e) => onSortChange(e.target.value)}
-                    className="pl-2 pr-8 py-1.5 text-sm rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all bg-white cursor-pointer"
+                    className="pl-2 pr-8 py-1.5 text-sm rounded-lg border border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 outline-none transition-all bg-white cursor-pointer"
                 >
                     {sortOptions.map(option => (
                         <option key={option.value} value={option.value}>

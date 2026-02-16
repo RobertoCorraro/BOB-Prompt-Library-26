@@ -20,9 +20,9 @@ export default function FilterBar({ types, activeType, onSelectType }) {
                         onClick={() => onSelectType(type.name)}
                         className={`text-xs px-3 py-1.5 rounded-md border transition-all duration-200 shrink-0 ${isSelected
                             ? isAll
-                                ? 'bg-slate-800 text-white border-transparent'
-                                : `${color.bg} ${color.text} ${color.border} font-bold shadow-sm`
-                            : 'bg-transparent border-slate-200 text-slate-500 hover:border-slate-300'
+                                ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 border-transparent'
+                                : `${color.bg} ${color.text} ${color.border} font-bold shadow-sm dark:bg-opacity-20`
+                            : 'bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
                             }`}
                     >
                         {type.name}

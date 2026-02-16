@@ -3,7 +3,7 @@ import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star, Br
 import { DEFAULT_COLOR } from '../lib/constants';
 import { extractVariables, triggerHaptic } from '../lib/utils';
 
-export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, onCompile, categories = [], types = [] }) {
+export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, onCompile, categories = [], types = [], viewMode = 'grid' }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
 
@@ -36,6 +36,71 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, o
         setTimeout(() => setIsCopied(false), 2500);
     };
 
+    if (viewMode === 'list') {
+        return (
+            <div className={`flex items-center w-full mb-3 bg-white dark:bg-slate-800 rounded-lg border shadow-sm overflow-hidden transition-all ${isCopied
+                ? 'border-green-500 shadow-green-200 dark:border-green-500/50 dark:shadow-green-900/20'
+                : 'border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600'
+                }`}>
+                {/* Title Section - 3/4 */}
+                <div
+                    onClick={(e) => {
+                        // In list view, clicking title expands/edits? Or just does nothing? 
+                        // User request didn't specify generic click behavior, but usually list items are clickable.
+                        // For now, let's make it expand/edit or just static? 
+                        // The user request was very specific about the layout. Let's keep it simple.
+                        // Maybe allow expanding to see details?
+                        // "The list view must have: 1) title... 2) copy button..."
+                        // Let's make the title area open the modal to edit/view details, similar to 'Edit' in grid?
+                        // Or just static. Let's make it trigger onEdit for now as that's the only way to see full content?
+                        // Actually, grid view has "Edit" button. List view doesn't have explicit edit button in the 1/4 spec.
+                        // Let's make the title click open the edit/view modal.
+                        triggerHaptic('light');
+                        onEdit(prompt);
+                    }}
+                    className="w-[75%] p-4 cursor-pointer border-r border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center"
+                >
+                    <div className="flex flex-col gap-1 overflow-hidden">
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base truncate">
+                            {prompt.title}
+                        </h3>
+                        {/* Optional: Show category/type in small text if space permits, to be helpful? */}
+                        {/* User said "Title" must occupy, implies mostly title. Let's add a tiny subtitle for context if helpful, or strict title. */}
+                        {/* adhering strictly to "Title" for the main visual, maybe tiny meta data is okay. */}
+                        <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500">
+                            <span className="truncate">{prompt.category}</span>
+                            <span>•</span>
+                            <span className="truncate">{prompt.type}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Copy Button Section - 1/4 */}
+                <button
+                    onClick={handleCopy}
+                    className={`w-[25%] self-stretch flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${isCopied
+                        ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                        : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-violet-600 dark:text-violet-400'
+                        }`}
+                    title="Copia Prompt"
+                >
+                    {isCopied ? (
+                        <>
+                            <RefreshCw className="w-5 h-5 animate-spin" /> {/* Or checkmark? PromptCard uses isCopied for border, doesn't change icon usually? */}
+                            {/* Original uses just border change. Let's give better feedback here since it's a big button */}
+                            <span className="text-xs font-bold">Copiato!</span>
+                        </>
+                    ) : (
+                        <>
+                            <Copy className="w-5 h-5" />
+                            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Copia</span>
+                        </>
+                    )}
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div
             className={`bg-white dark:bg-slate-800 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group ${isCopied
@@ -46,7 +111,7 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, o
             {/* Variables Header (if any) */}
             {variables.length > 0 && (
                 <div className={`border-b px-5 py-2 flex items-center justify-between text-xs font-mono transition-colors ${variables.length > 0
-                    ? 'bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                    ? 'bg-violet-50/50 dark:bg-violet-900/20 border-violet-100 dark:border-violet-900/30 text-violet-600 dark:text-violet-400'
                     : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400'
                     }`}>
                     <div className="flex items-center gap-2">
@@ -62,7 +127,7 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, o
                 className="p-5 cursor-pointer relative active:bg-slate-50 dark:active:bg-slate-700/50 transition-colors"
             >
                 <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex-1 pr-2">
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors flex-1 pr-2">
                         {prompt.title}
                     </h3>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -92,8 +157,8 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, o
                 <div className="relative">
                     {/* Display Variables Block Preview if extracted */}
                     {variables.length > 0 && isExpanded && (
-                        <div className="mb-3 p-3 bg-indigo-50/50 dark:bg-indigo-900/20 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono text-indigo-800 dark:text-indigo-300">
-                            <p className="font-bold text-indigo-400 mb-1">#Variabili utili</p>
+                        <div className="mb-3 p-3 bg-violet-50/50 dark:bg-violet-900/20 rounded-lg border border-violet-100 dark:border-violet-900/30 text-xs font-mono text-violet-800 dark:text-violet-300">
+                            <p className="font-bold text-violet-400 mb-1">#Variabili utili</p>
                             <ul className="space-y-1">
                                 {variables.map(v => (
                                     <li key={v}>- {'{{'}{v}{'}}'}: _____</li>
@@ -147,7 +212,7 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, o
 
                 {/* Copy Overlay Hint */}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-slate-700/90 p-1.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-600">
-                    <Copy className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                    <Copy className="w-4 h-4 text-violet-500 dark:text-violet-400" />
                 </div>
             </div>
 
@@ -163,7 +228,7 @@ export default function PromptCard({ prompt, onCopy, onEdit, onToggleFavorite, o
                                     e.stopPropagation();
                                     onCompile(prompt);
                                 }}
-                                className="col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all shadow-sm flex items-center justify-center gap-2"
+                                className="col-span-2 bg-violet-600 hover:bg-violet-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all shadow-sm flex items-center justify-center gap-2"
                             >
                                 <Zap className="w-4 h-4 fill-white" />
                                 <span>Compila & Usa</span>

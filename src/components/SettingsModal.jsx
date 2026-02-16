@@ -66,11 +66,11 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
             onClick={handleClose}
         >
             <div
-                className="bg-white w-full sm:rounded-2xl rounded-t-2xl shadow-xl sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
+                className="bg-white dark:bg-slate-900 w-full sm:rounded-2xl rounded-t-2xl shadow-xl sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
-                    <h2 className="text-lg font-bold text-slate-800">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
                         {editingItem ? `Modifica ${title.slice(0, -1)}` : `Gestisci ${title}`}
                     </h2>
                     <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 hover:bg-slate-200 rounded-full">
@@ -79,19 +79,19 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                 </div>
 
                 <div className="p-6 overflow-y-auto">
-                    <form onSubmit={handleSubmit} className="mb-6 space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <form onSubmit={handleSubmit} className="mb-6 space-y-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 value={newItemName}
                                 onChange={(e) => setNewItemName(e.target.value)}
                                 placeholder={editingItem ? "Modifica nome..." : `Nuova ${title.slice(0, -1)}...`}
-                                className="flex-1 px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all bg-white"
+                                className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-base"
                             />
                             <button
                                 type="submit"
                                 disabled={!newItemName.trim() || isLoading}
-                                className={`text-white p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${editingItem ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-indigo-600 hover:bg-indigo-700'
+                                className={`text-white p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${editingItem ? 'bg-violet-600 hover:bg-violet-700' : 'bg-violet-600 hover:bg-violet-700'
                                     }`}
                                 title={editingItem ? "Salva Modifiche" : "Aggiungi"}
                             >
@@ -123,7 +123,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                         type="button"
                                         onClick={() => { triggerHaptic('light'); setSelectedColor(color); }}
                                         className={`w-8 h-8 rounded-full border-2 transition-all flex items-center justify-center ${color.bg} ${selectedColor.id === color.id
-                                            ? 'border-slate-800 scale-110 shadow-sm'
+                                            ? 'border-slate-800 dark:border-white scale-110 shadow-sm'
                                             : 'border-transparent hover:scale-105'
                                             }`}
                                         title={color.name}
@@ -139,7 +139,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
 
                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                         {items.length === 0 ? (
-                            <p className="text-center text-slate-400 text-sm py-4">Nessun elemento presente.</p>
+                            <p className="text-center text-slate-400 dark:text-slate-500 text-sm py-4">Nessun elemento presente.</p>
                         ) : (
                             items.map((item) => {
                                 // Fallback to default color if item has no color property (backward compatibility)
@@ -155,13 +155,13 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                     <div
                                         key={item.id || item.name}
                                         className={`flex items-center justify-between p-3 rounded-lg group transition-all border ${isEditingThis
-                                            ? 'bg-indigo-50 border-indigo-200 shadow-sm'
-                                            : 'bg-white border-slate-100 hover:shadow-sm hover:border-indigo-100'
+                                            ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 shadow-sm'
+                                            : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:shadow-sm hover:border-violet-100 dark:hover:border-slate-600'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className={`w-4 h-4 rounded-full ${colorObj.bg} border ${colorObj.border}`} />
-                                            <span className={`font-medium ${isEditingThis ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                            <span className={`font-medium ${isEditingThis ? 'text-violet-700 dark:text-violet-300' : 'text-slate-700 dark:text-slate-200'}`}>
                                                 {item.name || item}
                                             </span>
                                         </div>
@@ -169,7 +169,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                         <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => startEditing(item)}
-                                                className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-md transition-colors"
+                                                className="text-slate-400 hover:text-violet-600 hover:bg-violet-50 p-1.5 rounded-md transition-colors"
                                                 title="Modifica"
                                             >
                                                 <Pencil className="w-4 h-4" />

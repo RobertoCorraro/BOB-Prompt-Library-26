@@ -55,17 +55,17 @@ export default function VariableModal({ isOpen, onClose, prompt, variables }) {
             onClick={handleClose}
         >
             <div
-                className="bg-white w-full sm:rounded-2xl rounded-t-2xl shadow-xl sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
+                className="bg-white dark:bg-slate-900 w-full sm:rounded-2xl rounded-t-2xl shadow-xl sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
                     <div className="flex items-center gap-2">
-                        <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
-                            <Zap className="w-5 h-5 fill-indigo-600" />
+                        <div className="p-2 bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 rounded-lg">
+                            <Zap className="w-5 h-5 fill-violet-600 dark:fill-violet-400" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-slate-800 leading-tight">Compila Prompt</h2>
-                            <p className="text-xs text-slate-500 line-clamp-1">{prompt.title}</p>
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-tight">Compila Prompt</h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{prompt.title}</p>
                         </div>
                     </div>
                     <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 hover:bg-slate-200 rounded-full">
@@ -74,21 +74,21 @@ export default function VariableModal({ isOpen, onClose, prompt, variables }) {
                 </div>
 
                 <div className="p-6 overflow-y-auto space-y-4">
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
                         Inserisci i valori per le variabili. Il prompt verrà compilato e copiato automaticamente.
                     </p>
 
                     <div className="space-y-3">
                         {variables.map(variable => (
                             <div key={variable}>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 ml-1">
                                     {variable}
                                 </label>
                                 <input
                                     type="text"
                                     value={values[variable] || ''}
                                     onChange={(e) => handleInputChange(variable, e.target.value)}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all bg-slate-50 focus:bg-white text-slate-800"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-500/20 outline-none transition-all bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-slate-800 dark:text-slate-100 text-base"
                                     placeholder={`Valore per ${variable}...`}
                                     autoFocus={variables.indexOf(variable) === 0}
                                 />
@@ -97,10 +97,10 @@ export default function VariableModal({ isOpen, onClose, prompt, variables }) {
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-slate-100 bg-slate-50/50 sticky bottom-0 pb-safe">
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 sticky bottom-0 pb-safe">
                     <button
                         onClick={handleCopy}
-                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]"
+                        className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-violet-200 transition-all active:scale-[0.98]"
                     >
                         <Copy className="w-5 h-5" />
                         <span>Copia Prompt Compilato</span>

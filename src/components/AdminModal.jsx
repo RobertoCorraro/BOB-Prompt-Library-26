@@ -136,16 +136,16 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
             onClick={handleClose}
         >
             <div
-                className={`bg-white w-full sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 transition-all ${isFullscreen
+                className={`bg-white dark:bg-slate-900 w-full sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 transition-all ${isFullscreen
                     ? 'h-full sm:h-full max-w-none rounded-none sm:rounded-none'
                     : 'sm:max-w-lg max-h-[90vh]'
                     }`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
                     <div className="flex items-center gap-3">
-                        <h2 className="text-lg font-bold text-slate-800 truncate max-w-[150px] sm:max-w-none">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate max-w-[150px] sm:max-w-none">
                             {initialData ? 'Modifica' : 'Nuovo'} <span className="hidden sm:inline">Prompt</span>
                         </h2>
                         {/* History Button */}
@@ -153,8 +153,8 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                             <button
                                 onClick={() => setShowHistory(!showHistory)}
                                 className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium ${showHistory
-                                    ? 'bg-indigo-100 text-indigo-700'
-                                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                                    ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
+                                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                                     }`}
                                 title="Storico Revisioni"
                             >
@@ -166,8 +166,8 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                         <button
                             onClick={() => setIsFullscreen(!isFullscreen)}
                             className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium ${isFullscreen
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                                ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
+                                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                                 }`}
                             title={isFullscreen ? "Riduci" : "Schermo Intero"}
                         >
@@ -186,34 +186,34 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                         {/* Non-editor fields: Hide if fullscreen */}
                         <div className={`space-y-4 ${isFullscreen ? 'hidden' : 'block'}`}>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Titolo</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Titolo</label>
                                 <input
                                     type="text"
                                     required
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all text-base bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                     placeholder="Es: Generatore di idee..."
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Categoria</label>
                                     <select
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all bg-white"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-slate-100"
                                     >
                                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo</label>
                                     <select
                                         value={formData.type}
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all bg-white"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-slate-100"
                                     >
                                         {types.map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
@@ -221,7 +221,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Tag Associati</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tag Associati</label>
                                 {promptTags && promptTags.length > 0 ? (
                                     <div className="flex flex-wrap gap-2">
                                         {promptTags.map(tag => {
@@ -232,8 +232,8 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                                     type="button"
                                                     onClick={() => toggleTag(tag)}
                                                     className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all border ${isSelected
-                                                        ? 'bg-indigo-100 text-indigo-700 border-indigo-300'
-                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-200 hover:text-indigo-600'
+                                                        ? 'bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-800'
+                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-violet-200 hover:text-violet-600 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:border-violet-700 dark:hover:text-violet-400'
                                                         }`}
                                                 >
                                                     {tag}
@@ -249,14 +249,14 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
 
                         {/* Editor Area: Flex grow in fullscreen */}
                         <div className={`flex flex-col ${isFullscreen ? 'flex-1 h-full' : ''}`}>
-                            <label className={`block text-sm font-medium text-slate-700 mb-2 ${isFullscreen ? 'hidden' : 'block'}`}>Contenuto Prompt</label>
+                            <label className={`block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 ${isFullscreen ? 'hidden' : 'block'}`}>Contenuto Prompt</label>
                             <textarea
                                 ref={textareaRef}
                                 required
                                 rows={isFullscreen ? undefined : 12} // Increased default height
                                 value={formData.content}
                                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                className={`w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-y font-mono text-sm leading-relaxed ${isFullscreen ? 'flex-1 resize-none p-4 text-base' : ''
+                                className={`w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all resize-y font-mono text-base leading-relaxed bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${isFullscreen ? 'flex-1 resize-none p-4 text-base' : ''
                                     }`}
                                 placeholder="Inserisci qui il prompt..."
                             />
@@ -264,7 +264,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                 <button
                                     type="button"
                                     onClick={insertVariablePlaceholder}
-                                    className="text-xs flex items-center gap-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded-md transition-all border border-transparent hover:border-indigo-100"
+                                    className="text-xs flex items-center gap-1.5 text-slate-500 hover:text-violet-600 hover:bg-violet-50 px-2 py-1 rounded-md transition-all border border-transparent hover:border-violet-100"
                                     title="Inserisci segnaposto variabile"
                                 >
                                     <Braces className="w-3.5 h-3.5" />
@@ -300,7 +300,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                                 </div>
                                                 <button
                                                     onClick={() => handleRestore(rev)}
-                                                    className="text-indigo-600 hover:text-indigo-800 text-xs font-medium flex items-center gap-1"
+                                                    className="text-violet-600 hover:text-violet-800 text-xs font-medium flex items-center gap-1"
                                                 >
                                                     <RotateCcw className="w-3 h-3" /> Ripristina
                                                 </button>
@@ -318,7 +318,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                 </div>
 
                 {/* Footer */}
-                <div className={`flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-white shrink-0 ${isFullscreen ? 'hidden sm:flex' : ''}`}> {/* Show footer in fullscreen on desktop, usually useful. Mobile maybe hide to maximize space? Let's keep it visible so user can save. */}
+                <div className={`flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 ${isFullscreen ? 'hidden sm:flex' : ''}`}> {/* Show footer in fullscreen on desktop, usually useful. Mobile maybe hide to maximize space? Let's keep it visible so user can save. */}
                     {/* Actually, user might want to save while in fullscreen. Let's keep it. */}
 
                     {initialData ? (
@@ -347,7 +347,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                             <button
                                 type="button"
                                 onClick={handleSaveRevision}
-                                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg transition-all text-sm font-medium"
+                                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-lg transition-all text-sm font-medium"
                                 title="Salva modifiche e archivia versione precedente"
                             >
                                 <History className="w-4 h-4" />
@@ -357,7 +357,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
 
                         <button
                             onClick={handleSubmit}
-                            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md shadow-indigo-200 transition-all transform active:scale-95 text-sm font-medium"
+                            className="flex items-center gap-2 px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg shadow-md shadow-violet-200 transition-all transform active:scale-95 text-sm font-medium"
                         >
                             <Save className="w-4 h-4" />
                             Salva

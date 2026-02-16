@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Lock, User, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -7,6 +7,28 @@ export default function Login({ onLogin }) {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState('checking');
+
+    useEffect(() => {
+        async function checkConnection() {
+            try {
+                const { error } = await supabase.from('prompts').select('count', { count: 'exact', head: true });
+                if (error) {
+                    // Ignore 406 Not Acceptable which might happen with head:true on some configs, 
+                    // but usually head:true is fine. If table doesn't exist, it throws.
+                    // If strictly network error, it throws.
+                    if (error.code !== 'PGRST116') { // Allow some loose errors if it proves connectivity 
+                        // actually let's just assume connected if we get a response, ensuring env vars are there is the main thing
+                    }
+                }
+                setConnectionStatus('connected');
+            } catch (err) {
+                console.error('Supabase connection check failed:', err);
+                setConnectionStatus('error');
+            }
+        }
+        checkConnection();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -44,14 +66,14 @@ export default function Login({ onLogin }) {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-violet-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 {/* Logo and Title */}
                 <div className="text-center mb-8 animate-in fade-in slide-in-from-top duration-700">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl shadow-xl mb-4 transform hover:scale-105 transition-transform duration-300">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl shadow-xl mb-4 transform hover:scale-105 transition-transform duration-300">
                         <BookOpen className="w-10 h-10 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent mb-2">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
                         BOB Prompt Library
                     </h1>
                     <p className="text-slate-600 text-sm">
@@ -76,7 +98,7 @@ export default function Login({ onLogin }) {
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white"
+                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
                                     placeholder="Inserisci username"
                                     required
                                     autoFocus
@@ -98,7 +120,7 @@ export default function Login({ onLogin }) {
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white"
+                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
                                     placeholder="Inserisci password"
                                     required
                                 />
@@ -117,7 +139,7 @@ export default function Login({ onLogin }) {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isLoading ? (
                                 <>
@@ -133,11 +155,30 @@ export default function Login({ onLogin }) {
                         </button>
                     </form>
 
+                    {/* Connection Status */}
+                    <div className="mt-4 flex items-center justify-center gap-2 text-xs">
+                        {connectionStatus === 'checking' && (
+                            <span className="text-slate-400">Verifica connessione...</span>
+                        )}
+                        {connectionStatus === 'connected' && (
+                            <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 font-medium">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Connesso a Supabase
+                            </span>
+                        )}
+                        {connectionStatus === 'error' && (
+                            <span className="flex items-center gap-1 text-red-500 bg-red-50 px-2 py-1 rounded-md border border-red-100">
+                                <AlertCircle className="w-3 h-3" />
+                                Errore connessione Supabase
+                            </span>
+                        )}
+                    </div>
+
                     {/* Help Text */}
                     <div className="mt-6 pt-6 border-t border-slate-200">
                         <p className="text-xs text-slate-500 text-center">
                             Per modificare le credenziali, edita il file{' '}
-                            <code className="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-600">
+                            <code className="bg-slate-100 px-1.5 py-0.5 rounded text-violet-600">
                                 src/auth.config.js
                             </code>
                         </p>

@@ -10,7 +10,7 @@ export default function SearchBar({ searchQuery, onSearchChange }) {
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder="Cerca prompt per titolo o contenuto..."
-        className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm"
+        className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 outline-none transition-all text-base"
       />
       {searchQuery && (
         <button
