@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Loader2, LayoutGrid, List, X, Braces, RefreshCw, Copy } from 'lucide-react';
-import { supabase } from './lib/supabase';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { AUTH_CONFIG } from './auth.config';
 import { COLOR_PALETTE, DEFAULT_COLOR } from './lib/constants';
 import { extractVariables, triggerHaptic } from './lib/utils';
@@ -137,14 +137,24 @@ export default function App() {
   }, [prompts, categories, types, tags, revisions, session, isAuthenticated]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session || sessionStorage.getItem('bob_authenticated') === 'true') {
-        fetchData();
-      } else {
+    if (!isSupabaseConfigured) {
+      loadMockData();
+      return;
+    }
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        if (session || sessionStorage.getItem('bob_authenticated') === 'true') {
+          fetchData();
+        } else {
+          loadMockData();
+        }
+      })
+      .catch(error => {
+        console.error('Auth check failed:', error);
         loadMockData();
-      }
-    });
+      });
 
     const {
       data: { subscription },
@@ -205,7 +215,8 @@ export default function App() {
 
     } catch (error) {
       console.error('Error fetching data:', error);
-      setToast({ show: true, message: 'Errore nel caricamento dei dati', type: 'error' });
+      setToast({ show: true, message: 'Errore nel caricamento dei dati. Utilizzo dati locali.', type: 'error' });
+      loadMockData();
     } finally {
       setLoading(false);
     }
