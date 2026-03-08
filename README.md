@@ -9,35 +9,39 @@
 
 **Il tuo centro di comando per l'ingegneria dei prompt. Organizza, testa e sincronizza i tuoi prompt AI in un'unica interfaccia premium.**
 
-[Esplora le Caratteristiche](#-caratteristiche) • [Inizia Ora](#-installazione-rapida) • [Guida Tecnica](./GUIDA_TECNICA.md) • [Sicurezza](#-security-audit)
+[Esplora le Caratteristiche](#-caratteristiche) • [Inizia Ora](#-installazione-rapida) • [Sicurezza](#-security-audit) • [Migrazione DB](#-migrazione-database)
 
 </div>
 
 ---
 
-## 🎯 Panoramica Professionale
+## 🎯 Panoramica
 
-**BOB Prompt Library** non è solo un raccoglitore, ma uno strumento di produttività avanzato per professionisti AI. Offre una sincronizzazione cloud nativa, un sistema di gestione variabili intelligente e un'interfaccia mobile-first progettata per chi lavora in mobilità.
+**BOB Prompt Library** è uno strumento di produttività per professionisti AI. Offre sincronizzazione cloud nativa, gestione avanzata delle variabili e un'interfaccia mobile-first.
 
-### 💎 Caratteristiche Principali
+### 💎 Funzionalità
 
-- **🏛️ Architettura Robusta**: Basata su **React 19** e **Vite** per prestazioni fulminee.
-- **☁️ Cloud Sync Nativo**: Integrazione profonda con **Supabase** (PostgreSQL) per disponibilità immediata tra dispositivi.
-- **🧩 Variabili Dinamiche**: Rilevamento automatico di placeholder (es. `{{testo}}`) con interfaccia di compilazione rapida.
-- **🏷️ Organizzazione Totale**: Tagging granulare, categorie dinamiche e tipologie codificate a colori.
-- **🌙 Esperienza Premium**: Supporto Dark Mode intelligente, micro-animazioni e feedback aptico per mobile.
+| Feature | Descrizione |
+|---|---|
+| ☁️ **Cloud Sync** | Integrazione nativa con **Supabase** (PostgreSQL) |
+| 🧩 **Variabili Dinamiche** | Rilevamento automatico `{{variabile}}` con compilatore rapido |
+| 🏷️ **Tassonomie** | Categorie, Tipi e Tag dinamici, gestiti da admin, ordinati alfabeticamente |
+| 📋 **Duplica Prompt** | Clona rapidamente qualsiasi prompt come punto di partenza |
+| 🕐 **Storico Revisioni** | Ogni modifica può essere salvata come revisione consultabile |
+| 🔀 **Ordinamento** | Ordina per data di creazione o modifica, crescente o decrescente |
+| ⭐ **Preferiti** | Filtra e segna i prompt più usati |
+| 🌙 **Dark Mode** | Tema scuro intelligente con micro-animazioni |
+| 📱 **Mobile-first** | Feedback aptico, layout responsive, ottimizzato per touch |
 
 ---
 
 ## 🛡️ Security Audit
 
-La sicurezza è una nostra priorità. Ecco lo stato attuale della protezione dei dati:
-
-- **Row Level Security (RLS)**: Il database Supabase è protetto da policy RLS. 
+- **Row Level Security (RLS)**: Policy RLS attive su tutte le tabelle.
   > [!NOTE]
-  > Le policy attuali sono in modalità "Demo". Per l'uso in produzione, consulta le istruzioni di hardening in [schema.sql](./schema.sql).
-- **Session Protection**: L'autenticazione è gestita localmente per velocità, con credenziali configurabili in `src/auth.config.js`.
-- **Environment Safety**: Le chiavi segrete del database non sono mai esposte nel codice sorgente pubblico, ma gestite tramite *GitHub Secrets*.
+  > Le policy attuali sono in modalità "Demo" (aperte). Per la produzione, esegui il blocco `-- SICUREZZA` in `supabase_migration.sql`.
+- **Session Protection**: Autenticazione locale configurabile in `src/auth.config.js`.
+- **Environment Safety**: Le chiavi Supabase non sono mai nel codice sorgente — gestite via *GitHub Secrets*.
 
 ---
 
@@ -46,27 +50,41 @@ La sicurezza è una nostra priorità. Ecco lo stato attuale della protezione dei
 Assicurati di avere **Node.js >= 18** installato.
 
 ```bash
-# Sviluppo Locale
 git clone https://github.com/RobertoCorraro/BOB-Prompt-Library-26.git
 cd BOB-Prompt-Library-26
 npm install
 npm run dev
 ```
 
-### Accesso Rapido (Demo)
+### Accesso Admin (Demo)
 *   **Username**: `admin`
 *   **Password**: `changeme123`
-*(Puoi modificare queste chiavi in `src/auth.config.js`)*
+*(Modifica le credenziali in `src/auth.config.js`)*
+
+---
+
+## 🗄️ Migrazione Database
+
+Al primo avvio con un database Supabase vuoto, esegui nel **SQL Editor** di Supabase:
+
+```sql
+-- Esegui il file: supabase_migration.sql
+```
+
+Il file `supabase_migration.sql` incluso nel progetto:
+- Aggiunge la colonna `color` alle tabelle tassonomia
+- Popola le categorie, tipi e tag di default
+- Include (commentato) lo script per migrare agli ID numerici sequenziali
 
 ---
 
 ## 🏗️ Deployment Automatizzato
 
-Abbiamo già configurato per te una pipeline di **CI/CD** con GitHub Actions:
+Pipeline CI/CD preconfigurata con GitHub Actions:
 
-1.  **Imposta i Secrets**: Vai in GitHub *Settings -> Secrets* e aggiungi `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
-2.  **Sorgente Pages**: In *Settings -> Pages*, imposta la sorgente su **GitHub Actions**.
-3.  **Deploy**: Basta un `git push` sul branch `main` e la tua app sarà online in meno di 2 minuti.
+1. **Secrets**: In GitHub *Settings → Secrets*, aggiungi `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+2. **Pages**: In *Settings → Pages*, imposta la sorgente su **GitHub Actions**.
+3. **Deploy**: Un `git push` su `main` pubblica in meno di 2 minuti.
 
 ---
 
@@ -74,17 +92,13 @@ Abbiamo già configurato per te una pipeline di **CI/CD** con GitHub Actions:
 
 ```bash
 src/
-├── components/   # UI Modulare (React)
-├── lib/          # Connessione Supabase & Utility
-├── auth.config.js # Configurazione Sicurezza
-└── App.jsx       # Logica centrale e Routing
+├── components/     # UI Modulare (React)
+├── lib/            # Connessione Supabase & Utility
+├── auth.config.js  # Credenziali admin locali
+└── App.jsx         # Logica centrale e stato
+supabase_migration.sql  # Script migrazione DB
+schema.sql              # Schema completo DB
 ```
-
----
-
-## 🤝 Supporto & Documentazione
-
-Per approfondimenti tecnici sul funzionamento di Vite, Supabase e GitHub Actions, consulta la nostra **[Guida Tecnica](./GUIDA_TECNICA.md)**.
 
 ---
 

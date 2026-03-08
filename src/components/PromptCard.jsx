@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star, Braces, Zap, Type, Trash2, Eye } from 'lucide-react';
+import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star, Braces, Zap, Type, Trash2, Eye, CopyPlus } from 'lucide-react';
 import { DEFAULT_COLOR } from '../lib/constants';
 import { extractVariables, triggerHaptic } from '../lib/utils';
 
@@ -11,6 +11,7 @@ export default function PromptCard({
     onToggleFavorite,
     onCompile,
     onView,
+    onDuplicate,
     categories = [],
     types = [],
     viewMode = 'grid'
@@ -62,6 +63,12 @@ export default function PromptCard({
         onToggleFavorite(prompt.id, prompt.is_favorite);
     };
 
+    const handleDuplicate = (e) => {
+        e.stopPropagation();
+        triggerHaptic('light');
+        onDuplicate(prompt);
+    };
+
     const handleView = (e) => {
         e.stopPropagation();
         triggerHaptic('light');
@@ -85,18 +92,13 @@ export default function PromptCard({
                     </div>
                 </div>
                 <div className="flex items-stretch border-l border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/50">
-                    <button onClick={handleView} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-all active:scale-95" title="Visualizza">
-                        <Eye className="w-5 h-5" />
-                    </button>
+                    <button onClick={handleView} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-all active:scale-95" title="Visualizza"><Eye className="w-5 h-5" /></button>
                     <button onClick={handleCopy} className={`w-12 sm:w-16 flex items-center justify-center transition-all active:scale-95 ${isCopied ? 'text-green-600 dark:text-green-400' : 'text-slate-400 hover:text-violet-600 dark:hover:text-violet-400'}`} title="Copia">
                         {isCopied ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Copy className="w-5 h-5" />}
                     </button>
-                    <button onClick={handleEdit} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-95" title="Modifica">
-                        <Edit2 className="w-5 h-5" />
-                    </button>
-                    <button onClick={handleDelete} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-95" title="Elimina">
-                        <Trash2 className="w-5 h-5" />
-                    </button>
+                    <button onClick={handleEdit} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-95" title="Modifica"><Edit2 className="w-5 h-5" /></button>
+                    {onDuplicate && <button onClick={handleDuplicate} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all active:scale-95" title="Duplica"><CopyPlus className="w-5 h-5" /></button>}
+                    <button onClick={handleDelete} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-95" title="Elimina"><Trash2 className="w-5 h-5" /></button>
                 </div>
             </div>
         );
@@ -113,12 +115,9 @@ export default function PromptCard({
                     <button onClick={handleCopy} className={`p-2.5 transition-colors border-r border-slate-100 dark:border-slate-700 ${isCopied ? 'text-green-600' : 'text-slate-400 hover:text-violet-600'}`} title="Copia">
                         <Copy className="w-4.5 h-4.5" />
                     </button>
-                    <button onClick={handleEdit} className="p-2.5 text-slate-400 hover:text-blue-600 transition-colors border-r border-slate-100 dark:border-slate-700" title="Modifica">
-                        <Edit2 className="w-4.5 h-4.5" />
-                    </button>
-                    <button onClick={handleDelete} className="p-2.5 text-slate-400 hover:text-red-600 transition-colors border-r border-slate-100 dark:border-slate-700" title="Elimina">
-                        <Trash2 className="w-4.5 h-4.5" />
-                    </button>
+                    <button onClick={handleEdit} className="p-2.5 text-slate-400 hover:text-blue-600 transition-colors border-r border-slate-100 dark:border-slate-700" title="Modifica"><Edit2 className="w-4.5 h-4.5" /></button>
+                    <button onClick={handleDelete} className="p-2.5 text-slate-400 hover:text-red-600 transition-colors border-r border-slate-100 dark:border-slate-700" title="Elimina"><Trash2 className="w-4.5 h-4.5" /></button>
+                    {onDuplicate && <button onClick={handleDuplicate} className="p-2.5 text-slate-400 hover:text-emerald-600 transition-colors border-r border-slate-100 dark:border-slate-700" title="Duplica"><CopyPlus className="w-4.5 h-4.5" /></button>}
                     <button onClick={handleToggleFavorite} className={`p-2.5 transition-colors ${prompt.is_favorite ? 'text-yellow-500 bg-yellow-50/50 dark:bg-yellow-900/10' : 'text-slate-400 hover:text-yellow-500'}`} title="Preferiti">
                         <Star className={`w-4.5 h-4.5 ${prompt.is_favorite ? 'fill-current' : ''}`} />
                     </button>
@@ -148,7 +147,13 @@ export default function PromptCard({
                     )}
                     <div className="ml-auto flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>{new Date(prompt.created_at).toLocaleDateString()}</span>
+                        <span title={new Date(prompt.created_at).toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}>
+                            {new Date(prompt.created_at).toLocaleString('it-IT', {
+                                timeZone: 'Europe/Rome',
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit'
+                            })}
+                        </span>
                     </div>
                 </div>
             </div>

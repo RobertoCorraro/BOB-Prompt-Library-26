@@ -17,25 +17,25 @@ import SettingsSidebar from './components/SettingsSidebar';
 
 // Mock data for when Supabase is not connected
 const MOCK_CATEGORIES = [
-  { id: '1', name: 'Psicologia', color: COLOR_PALETTE[8] }, // Purple
-  { id: '2', name: 'Marketing', color: COLOR_PALETTE[0] },  // Red
-  { id: '3', name: 'Business', color: COLOR_PALETTE[6] },   // Blue
-  { id: '4', name: 'Copywriting', color: COLOR_PALETTE[3] }, // Green
-  { id: '5', name: 'Coding', color: COLOR_PALETTE[9] }      // Pink
+  { id: '3', name: 'Business', color: COLOR_PALETTE[6] },      // Blue
+  { id: '5', name: 'Coding', color: COLOR_PALETTE[9] },        // Pink
+  { id: '4', name: 'Copywriting', color: COLOR_PALETTE[3] },   // Green
+  { id: '2', name: 'Marketing', color: COLOR_PALETTE[0] },     // Red
+  { id: '1', name: 'Psicologia', color: COLOR_PALETTE[8] },    // Purple
 ];
 
 const MOCK_TYPES = [
-  { id: '1', name: 'Prompt parziale', color: COLOR_PALETTE[5] }, // Cyan
-  { id: '2', name: 'Prompt template', color: COLOR_PALETTE[2] }, // Amber
-  { id: '3', name: 'System Prompt', color: COLOR_PALETTE[7] },   // Indigo
-  { id: '4', name: 'Esempio one-shot', color: COLOR_PALETTE[1] } // Orange
+  { id: '4', name: 'Esempio one-shot', color: COLOR_PALETTE[1] }, // Orange
+  { id: '1', name: 'Prompt parziale', color: COLOR_PALETTE[5] },  // Cyan
+  { id: '2', name: 'Prompt template', color: COLOR_PALETTE[2] },  // Amber
+  { id: '3', name: 'System Prompt', color: COLOR_PALETTE[7] },    // Indigo
 ];
 
 const MOCK_TAGS = [
-  { id: '1', name: 'SEO', color: COLOR_PALETTE[4] }, // Emerald
-  { id: '2', name: 'Social Media', color: COLOR_PALETTE[9] }, // Pink
-  { id: '3', name: 'Email', color: COLOR_PALETTE[2] }, // Amber
-  { id: '4', name: 'Productivity', color: COLOR_PALETTE[6] } // Blue
+  { id: '3', name: 'Email', color: COLOR_PALETTE[2] },         // Amber
+  { id: '4', name: 'Productivity', color: COLOR_PALETTE[6] },  // Blue
+  { id: '1', name: 'SEO', color: COLOR_PALETTE[4] },           // Emerald
+  { id: '2', name: 'Social Media', color: COLOR_PALETTE[9] },  // Pink
 ];
 
 const MOCK_PROMPTS = [
@@ -68,6 +68,7 @@ export default function App() {
   const [types, setTypes] = useState([]);
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -199,10 +200,12 @@ export default function App() {
         .select('*')
         .order('created_at', { ascending: false });
 
+      const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
+
       setPrompts(promptsData || []);
-      setCategories(catData?.length > 0 ? catData : MOCK_CATEGORIES);
-      setTypes(typeData?.length > 0 ? typeData : MOCK_TYPES);
-      setTags(tagData?.length > 0 ? tagData : MOCK_TAGS);
+      setCategories(sortByName(catData?.length > 0 ? catData : MOCK_CATEGORIES));
+      setTypes(sortByName(typeData?.length > 0 ? typeData : MOCK_TYPES));
+      setTags(sortByName(tagData?.length > 0 ? tagData : MOCK_TAGS));
 
       // Group revisions by prompt_id: { [prompt_id]: [...revisions] }
       if (revData) {
@@ -259,14 +262,17 @@ export default function App() {
   const handleDelete = async (id) => {
     ensureAuth(async () => {
       try {
+        setIsSaving(true);
         const { error } = await supabase.from('prompts').delete().eq('id', id);
         if (error) throw error;
-        await fetchData(); // Always refetch from DB
+        await fetchData();
         setToast({ show: true, message: 'Prompt eliminato con successo', type: 'success' });
         triggerHaptic('warning');
       } catch (error) {
         console.error('Error deleting:', error);
         setToast({ show: true, message: 'Errore durante l\'eliminazione', type: 'error' });
+      } finally {
+        setIsSaving(false);
       }
       setIsModalOpen(false);
     });
@@ -281,6 +287,7 @@ export default function App() {
       };
 
       try {
+        setIsSaving(true);
         if (modalInitialData) {
           if (saveAsRevision) {
             const { error: revError } = await supabase.from('prompt_revisions').insert([{
@@ -306,6 +313,33 @@ export default function App() {
       } catch (error) {
         console.error('Error saving:', error);
         setToast({ show: true, message: 'Errore: ' + (error.message || 'salvataggio fallito'), type: 'error' });
+      } finally {
+        setIsSaving(false);
+      }
+    });
+  };
+
+  const handleDuplicate = async (prompt) => {
+    ensureAuth(async () => {
+      try {
+        setIsSaving(true);
+        const { id, created_at, updated_at, ...rest } = prompt;
+        const duplicate = {
+          ...rest,
+          title: `Copia di ${prompt.title}`,
+          is_favorite: false,
+          updated_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('prompts').insert([duplicate]);
+        if (error) throw error;
+        await fetchData();
+        setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
+        triggerHaptic('success');
+      } catch (error) {
+        console.error('Error duplicating:', error);
+        setToast({ show: true, message: 'Errore durante la duplicazione', type: 'error' });
+      } finally {
+        setIsSaving(false);
       }
     });
   };
@@ -313,14 +347,17 @@ export default function App() {
   const handleToggleFavorite = async (id, currentStatus) => {
     ensureAuth(async () => {
       try {
+        setIsSaving(true);
         const { error } = await supabase.from('prompts').update({ is_favorite: !currentStatus }).eq('id', id);
         if (error) throw error;
-        await fetchData(); // Always refetch from DB
+        await fetchData();
         setToast({ show: true, message: !currentStatus ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti', type: 'success' });
         triggerHaptic('light');
       } catch (error) {
         console.error('Error toggling favorite:', error);
         setToast({ show: true, message: 'Errore durante l\'operazione', type: 'error' });
+      } finally {
+        setIsSaving(false);
       }
     });
   };
@@ -356,6 +393,7 @@ export default function App() {
   const handleAddMetadata = async (item) => {
     const table = getMetadataTable();
     try {
+      setIsSaving(true);
       const { error } = await supabase.from(table).insert([{ name: item.name, color: item.color }]);
       if (error) throw error;
       await fetchData();
@@ -363,12 +401,15 @@ export default function App() {
     } catch (error) {
       console.error('Error adding metadata:', error);
       setToast({ show: true, message: 'Errore: ' + (error.message || 'aggiunta fallita'), type: 'error' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdateMetadata = async (id, updatedItem) => {
     const table = getMetadataTable();
     try {
+      setIsSaving(true);
       const { error } = await supabase.from(table).update({ name: updatedItem.name, color: updatedItem.color }).eq('id', id);
       if (error) throw error;
       await fetchData();
@@ -376,12 +417,29 @@ export default function App() {
     } catch (error) {
       console.error('Error updating metadata:', error);
       setToast({ show: true, message: 'Errore: ' + (error.message || 'aggiornamento fallito'), type: 'error' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDeleteMetadata = async (id) => {
     const table = getMetadataTable();
+
+    // #9: Warn if taxonomy item is still in use by prompts
+    if (settingsMode === 'categories' || settingsMode === 'types') {
+      const field = settingsMode === 'categories' ? 'category' : 'type';
+      const itemName = (settingsMode === 'categories' ? categories : types).find(i => i.id === id)?.name;
+      const usedBy = prompts.filter(p => p[field] === itemName);
+      if (usedBy.length > 0) {
+        const confirmed = window.confirm(
+          `"${itemName}" è ancora usata da ${usedBy.length} prompt. Eliminandola, quei prompt perderanno questa ${settingsMode === 'categories' ? 'categoria' : 'tipo'}. Continuare?`
+        );
+        if (!confirmed) return;
+      }
+    }
+
     try {
+      setIsSaving(true);
       const { error } = await supabase.from(table).delete().eq('id', id);
       if (error) throw error;
       await fetchData();
@@ -389,6 +447,8 @@ export default function App() {
     } catch (error) {
       console.error('Error deleting metadata:', error);
       setToast({ show: true, message: 'Errore: ' + (error.message || 'rimozione fallita'), type: 'error' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -425,7 +485,15 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      <main className="max-w-7xl mx-auto py-6">
+      {/* Global saving indicator */}
+      {isSaving && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-violet-600 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg animate-pulse">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <span>Salvataggio...</span>
+        </div>
+      )}
+
+      <main id="main" className="max-w-7xl mx-auto">
         <CategoryMenu
           categories={[{ id: 'all', name: 'Tutti', color: { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-200' } }, ...categories]}
           activeCategory={activeCategory}
@@ -488,6 +556,7 @@ export default function App() {
                 onCompile={handleOpenCompile}
                 onView={(p) => setViewModal({ isOpen: true, prompt: p })}
                 onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
               />
             ))}
           </div>
