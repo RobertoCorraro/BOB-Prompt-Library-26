@@ -338,27 +338,49 @@ export default function App() {
     return content;
   };
 
-  const handleAddMetadata = (item) => {
-    const newItem = { id: Date.now().toString(), name: item.name, color: item.color };
-    if (settingsMode === 'categories') setCategories([...categories, newItem]);
-    else if (settingsMode === 'types') setTypes([...types, newItem]);
-    else setTags([...tags, newItem]);
-    setToast({ show: true, message: 'Elemento aggiunto', type: 'success' });
+  const getMetadataTable = () => {
+    if (settingsMode === 'categories') return 'categories';
+    if (settingsMode === 'types') return 'types';
+    return 'prompt_tags';
   };
 
-  const handleUpdateMetadata = (id, updatedItem) => {
-    const updater = (list) => list.map(item => item.id === id ? { ...item, ...updatedItem } : item);
-    if (settingsMode === 'categories') setCategories(updater(categories));
-    else if (settingsMode === 'types') setTypes(updater(types));
-    else setTags(updater(tags));
-    setToast({ show: true, message: 'Elemento aggiornato', type: 'success' });
+  const handleAddMetadata = async (item) => {
+    const table = getMetadataTable();
+    try {
+      const { error } = await supabase.from(table).insert([{ name: item.name, color: item.color }]);
+      if (error) throw error;
+      await fetchData();
+      setToast({ show: true, message: 'Elemento aggiunto', type: 'success' });
+    } catch (error) {
+      console.error('Error adding metadata:', error);
+      setToast({ show: true, message: 'Errore: ' + (error.message || 'aggiunta fallita'), type: 'error' });
+    }
   };
 
-  const handleDeleteMetadata = (id) => {
-    if (settingsMode === 'categories') setCategories(categories.filter(c => c.id !== id));
-    else if (settingsMode === 'types') setTypes(types.filter(t => t.id !== id));
-    else setTags(tags.filter(t => t.id !== id));
-    setToast({ show: true, message: 'Elemento rimosso', type: 'success' });
+  const handleUpdateMetadata = async (id, updatedItem) => {
+    const table = getMetadataTable();
+    try {
+      const { error } = await supabase.from(table).update({ name: updatedItem.name, color: updatedItem.color }).eq('id', id);
+      if (error) throw error;
+      await fetchData();
+      setToast({ show: true, message: 'Elemento aggiornato', type: 'success' });
+    } catch (error) {
+      console.error('Error updating metadata:', error);
+      setToast({ show: true, message: 'Errore: ' + (error.message || 'aggiornamento fallito'), type: 'error' });
+    }
+  };
+
+  const handleDeleteMetadata = async (id) => {
+    const table = getMetadataTable();
+    try {
+      const { error } = await supabase.from(table).delete().eq('id', id);
+      if (error) throw error;
+      await fetchData();
+      setToast({ show: true, message: 'Elemento rimosso', type: 'success' });
+    } catch (error) {
+      console.error('Error deleting metadata:', error);
+      setToast({ show: true, message: 'Errore: ' + (error.message || 'rimozione fallita'), type: 'error' });
+    }
   };
 
   const filteredPrompts = prompts.filter(prompt => {
