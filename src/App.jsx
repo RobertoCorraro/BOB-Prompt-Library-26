@@ -185,11 +185,27 @@ export default function App() {
       const { data: catData } = await supabase.from('categories').select('*').order('name');
       const { data: typeData } = await supabase.from('types').select('*').order('name');
       const { data: tagData } = await supabase.from('prompt_tags').select('*').order('name');
+      const { data: revData } = await supabase
+        .from('prompt_revisions')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       setPrompts(promptsData || []);
       setCategories(catData?.length > 0 ? catData : MOCK_CATEGORIES);
       setTypes(typeData?.length > 0 ? typeData : MOCK_TYPES);
       setTags(tagData?.length > 0 ? tagData : MOCK_TAGS);
+
+      // Group revisions by prompt_id: { [prompt_id]: [...revisions] }
+      if (revData) {
+        const grouped = revData.reduce((acc, rev) => {
+          if (!acc[rev.prompt_id]) acc[rev.prompt_id] = [];
+          acc[rev.prompt_id].push(rev);
+          return acc;
+        }, {});
+        setRevisions(grouped);
+      } else {
+        setRevisions({});
+      }
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -258,7 +274,7 @@ export default function App() {
       try {
         if (modalInitialData) {
           if (saveAsRevision) {
-            await supabase.from('prompt_revisions').insert([{
+            const { error: revError } = await supabase.from('prompt_revisions').insert([{
               prompt_id: modalInitialData.id,
               title: modalInitialData.title,
               content: modalInitialData.content,
@@ -266,10 +282,11 @@ export default function App() {
               type: modalInitialData.type,
               tags: modalInitialData.tags || [],
             }]);
+            if (revError) throw revError;
           }
           const { error } = await supabase.from('prompts').update(newPrompt).eq('id', modalInitialData.id);
           if (error) throw error;
-          setToast({ show: true, message: 'Prompt aggiornato!', type: 'success' });
+          setToast({ show: true, message: saveAsRevision ? 'Revisione salvata con successo!' : 'Prompt aggiornato!', type: 'success' });
         } else {
           const { error } = await supabase.from('prompts').insert([{ ...newPrompt, is_favorite: false }]);
           if (error) throw error;
@@ -279,7 +296,7 @@ export default function App() {
         setIsModalOpen(false);
       } catch (error) {
         console.error('Error saving:', error);
-        setToast({ show: true, message: 'Errore durante il salvataggio', type: 'error' });
+        setToast({ show: true, message: 'Errore: ' + (error.message || 'salvataggio fallito'), type: 'error' });
       }
     });
   };
