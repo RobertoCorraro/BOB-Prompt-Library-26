@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Loader2, LayoutGrid, List, X, Braces, RefreshCw, Copy } from 'lucide-react';
+import { Plus, Loader2, LayoutGrid, List, X, Braces, RefreshCw, Copy, ArrowUpDown } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { AUTH_CONFIG } from './auth.config';
 import { COLOR_PALETTE, DEFAULT_COLOR } from './lib/constants';
@@ -84,6 +84,8 @@ export default function App() {
     return localStorage.getItem('bob_view_mode') || 'grid';
   });
   const [showFavorites, setShowFavorites] = useState(false);
+  const [sortBy, setSortBy] = useState(() => localStorage.getItem('bob_sort_by') || 'created_at');
+  const [sortDir, setSortDir] = useState(() => localStorage.getItem('bob_sort_dir') || 'desc');
 
   // Modals State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -162,6 +164,13 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Re-fetch data whenever sort preferences change
+  useEffect(() => {
+    if (session || isAuthenticated) {
+      fetchData();
+    }
+  }, [sortBy, sortDir]);
+
   // Loads static mock data for guests (no localStorage, in-memory only).
   const loadMockData = () => {
     setPrompts(MOCK_PROMPTS);
@@ -178,7 +187,7 @@ export default function App() {
       const { data: promptsData, error: promptsError } = await supabase
         .from('prompts')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order(sortBy, { ascending: sortDir === 'asc' });
 
       if (promptsError) throw promptsError;
 
@@ -429,9 +438,39 @@ export default function App() {
               {activeCategory === 'Tutti' ? 'Tutti i Prompt' : activeCategory}
               <span className="ml-2 text-sm font-normal text-slate-400">({filteredPrompts.length})</span>
             </h2>
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-              <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-violet-600 shadow-sm' : 'text-slate-400'}`}><LayoutGrid className="w-4 h-4" /></button>
-              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-violet-600 shadow-sm' : 'text-slate-400'}`}><List className="w-4 h-4" /></button>
+            <div className="flex items-center gap-2">
+              {/* Sort Button */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    const nextBy = sortBy === 'created_at' ? 'updated_at' : 'created_at';
+                    setSortBy(nextBy);
+                    localStorage.setItem('bob_sort_by', nextBy);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-700 dark:hover:text-violet-400 transition-colors"
+                  title={sortBy === 'created_at' ? 'Ordine: Data Creazione' : 'Ordine: Data Modifica'}
+                >
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{sortBy === 'created_at' ? 'Creazione' : 'Modifica'}</span>
+                </button>
+              </div>
+              {/* Direction Toggle */}
+              <button
+                onClick={() => {
+                  const nextDir = sortDir === 'desc' ? 'asc' : 'desc';
+                  setSortDir(nextDir);
+                  localStorage.setItem('bob_sort_dir', nextDir);
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-700 dark:hover:text-violet-400 transition-colors"
+                title={sortDir === 'desc' ? 'Dal più recente' : 'Dal più vecchio'}
+              >
+                {sortDir === 'desc' ? '↓ Recenti' : '↑ Vecchi'}
+              </button>
+              {/* View Mode Toggle */}
+              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-violet-600 shadow-sm' : 'text-slate-400'}`}><LayoutGrid className="w-4 h-4" /></button>
+                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-violet-600 shadow-sm' : 'text-slate-400'}`}><List className="w-4 h-4" /></button>
+              </div>
             </div>
           </div>
 
