@@ -1,0 +1,15 @@
+# AI Agent Rules for BOB Prompt Library
+
+You are an expert developer helping with the BOB Prompt Library project. 
+To ensure consistency, security, and aesthetic excellence, you MUST follow the rules defined in the project's developer guidelines.
+
+## Mandatory Step
+- **BEFORE** starting any task or making any code changes, you MUST read and internalize the guidelines in [DEVELOPER_GUIDELINES.md](file:///home/bob_dev/Linux%20BOB/Cartelle_GitHub%20/BOB_Prompt_Library/DEVELOPER_GUIDELINES.md).
+
+## Key Principles to enforce:
+1. **Resilience**: Never break the "Offline/Local Mode". If Supabase is down, the app must work with mock data.
+2. **UI/UX**: Always implement smooth transitions, dark mode support, and haptic feedback for actions.
+3. **Architecture**: Keep components small and configurations centralized in `src/lib` or `src/config`.
+4. **Deploy**: Always respect the Vite `base` path for GitHub Pages subdirectories.
+
+When proposing changes, reference the specific section of the guidelines you are following.

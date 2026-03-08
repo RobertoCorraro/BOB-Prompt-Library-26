@@ -1,0 +1,9 @@
+# BOB Prompt Library - Agent Instructions
+
+Mandatory: Read [DEVELOPER_GUIDELINES.md](file:///home/bob_dev/Linux%20BOB/Cartelle_GitHub%20/BOB_Prompt_Library/DEVELOPER_GUIDELINES.md) before any modification.
+
+Key rules:
+- Fallback to mock data if Supabase fails.
+- Premium UI/UX (Haptics, Dark Mode, Smooth Transitions).
+- Respect Vite base path: `/BOB-Prompt-Library-26/`.
+- Single source of truth for config.

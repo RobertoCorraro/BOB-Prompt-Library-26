@@ -127,14 +127,17 @@ export default function App() {
   useEffect(() => {
     // Only persist to local storage if not logged in or if we want a local cache
     // Let's always persist to have a fallback, but mark it as 'local'
-    if (!session && !isAuthenticated) {
-      localStorage.setItem('bob_local_prompts', JSON.stringify(prompts));
-      localStorage.setItem('bob_local_categories', JSON.stringify(categories));
-      localStorage.setItem('bob_local_types', JSON.stringify(types));
-      localStorage.setItem('bob_local_tags', JSON.stringify(tags));
-      localStorage.setItem('bob_local_revisions', JSON.stringify(revisions));
+    // Prevent overwriting with empty data during initial load
+    if (!loading && prompts.length > 0) {
+      if (!session && !isAuthenticated) {
+        localStorage.setItem('bob_local_prompts', JSON.stringify(prompts));
+        localStorage.setItem('bob_local_categories', JSON.stringify(categories));
+        localStorage.setItem('bob_local_types', JSON.stringify(types));
+        localStorage.setItem('bob_local_tags', JSON.stringify(tags));
+        localStorage.setItem('bob_local_revisions', JSON.stringify(revisions));
+      }
     }
-  }, [prompts, categories, types, tags, revisions, session, isAuthenticated]);
+  }, [prompts, categories, types, tags, revisions, session, isAuthenticated, loading]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -208,7 +211,13 @@ export default function App() {
       const { data: typeData } = await supabase.from('types').select('*').order('name');
       const { data: tagData } = await supabase.from('prompt_tags').select('*').order('name');
 
-      if (promptsData) setPrompts(promptsData);
+      if (promptsData && promptsData.length > 0) {
+        setPrompts(promptsData);
+      } else {
+        // Fallback to mock data if DB is empty
+        setPrompts(MOCK_PROMPTS);
+      }
+
       setCategories(catData?.length > 0 ? catData : MOCK_CATEGORIES);
       setTypes(typeData?.length > 0 ? typeData : MOCK_TYPES);
       setTags(tagData?.length > 0 ? tagData : MOCK_TAGS);
@@ -223,7 +232,7 @@ export default function App() {
   };
 
   const handleLogin = (username, password) => {
-    if (username === AUTH_CONFIG.adminUsername && password === AUTH_CONFIG.adminPassword) {
+    if (username === AUTH_CONFIG.username && password === AUTH_CONFIG.password) {
       setIsAuthenticated(true);
       sessionStorage.setItem('bob_authenticated', 'true');
       setIsLoginModalOpen(false);

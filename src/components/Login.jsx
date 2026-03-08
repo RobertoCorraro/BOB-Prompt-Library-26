@@ -22,9 +22,7 @@ export default function Login({ onLogin, onClose }) {
             try {
                 const { error } = await supabase.from('prompts').select('count', { count: 'exact', head: true });
                 if (error) {
-                    if (error.code !== 'PGRST116') {
-                        // connection issues
-                    }
+                    console.warn('Supabase accessible but query failed:', error);
                 }
                 setConnectionStatus('connected');
             } catch (err) {
