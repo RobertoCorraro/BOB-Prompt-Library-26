@@ -703,6 +703,10 @@ export default function App() {
         prompt={viewModal.prompt}
         onCopy={handleCopy}
         onCompile={handleOpenCompile}
+        onEdit={(p) => ensureAuth(() => { setModalInitialData(p); setIsModalOpen(true); })}
+        onDelete={handleDelete}
+        onDuplicate={handleDuplicate}
+        onToggleFavorite={handleToggleFavorite}
       />
 
       <AuthGuardModal
