@@ -438,7 +438,7 @@ export default function App() {
       <Header
         onSearch={setSearchQuery}
         onSettings={() => setIsSidebarOpen(true)}
-        userEmail={session?.user?.email || (isAuthenticated ? AUTH_CONFIG.adminUsername : '')}
+        userEmail={session?.user?.email || (isAuthenticated ? AUTH_CONFIG.username : '')}
         showFavorites={showFavorites}
         onToggleFavorites={() => { triggerHaptic('light'); setShowFavorites(!showFavorites); }}
         isLoggedIn={isLoggedIn}
@@ -504,7 +504,7 @@ export default function App() {
         onClose={() => setIsSidebarOpen(false)}
         onOpenSettings={(mode) => { setSettingsMode(mode); setIsSidebarOpen(false); setIsSettingsOpen(true); }}
         onLogout={handleLogout}
-        userEmail={session?.user?.email}
+        userEmail={session?.user?.email || (isAuthenticated ? AUTH_CONFIG.username : '')}
         types={types}
         activeType={activeType}
         onSelectType={setActiveType}
