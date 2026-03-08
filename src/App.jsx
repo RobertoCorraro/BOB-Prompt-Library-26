@@ -124,18 +124,9 @@ export default function App() {
     localStorage.setItem('bob_view_mode', viewMode);
   }, [viewMode]);
 
-  useEffect(() => {
-    // Only persist to local storage if there is NO Supabase session.
-    // This allows local guest and local admin modes to persist changes.
-    // We remove the prompts.length > 0 guard to allow persisting empty lists after deletions.
-    if (!loading && !session) {
-      localStorage.setItem('bob_local_prompts', JSON.stringify(prompts));
-      localStorage.setItem('bob_local_categories', JSON.stringify(categories));
-      localStorage.setItem('bob_local_types', JSON.stringify(types));
-      localStorage.setItem('bob_local_tags', JSON.stringify(tags));
-      localStorage.setItem('bob_local_revisions', JSON.stringify(revisions));
-    }
-  }, [prompts, categories, types, tags, revisions, session, isAuthenticated, loading]);
+  // NOTE: We intentionally do NOT persist data to localStorage.
+  // Supabase is the single source of truth. Local admin changes persist
+  // via Supabase. Guest users work with in-memory mock data that resets on reload.
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -171,51 +162,13 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Loads static mock data for guests (no localStorage, in-memory only).
   const loadMockData = () => {
-    try {
-      const localPrompts = localStorage.getItem('bob_local_prompts');
-      const localCategories = localStorage.getItem('bob_local_categories');
-      const localTypes = localStorage.getItem('bob_local_types');
-      const localTags = localStorage.getItem('bob_local_tags');
-      const localRevisions = localStorage.getItem('bob_local_revisions');
-
-      if (localPrompts) {
-        const parsed = JSON.parse(localPrompts);
-        setPrompts(parsed.length > 0 ? parsed : MOCK_PROMPTS);
-      } else {
-        setPrompts(MOCK_PROMPTS);
-      }
-
-      if (localCategories) {
-        const parsed = JSON.parse(localCategories);
-        setCategories(parsed.length > 0 ? parsed : MOCK_CATEGORIES);
-      } else {
-        setCategories(MOCK_CATEGORIES);
-      }
-
-      if (localTypes) {
-        const parsed = JSON.parse(localTypes);
-        setTypes(parsed.length > 0 ? parsed : MOCK_TYPES);
-      } else {
-        setTypes(MOCK_TYPES);
-      }
-
-      if (localTags) {
-        const parsed = JSON.parse(localTags);
-        setTags(parsed.length > 0 ? parsed : MOCK_TAGS);
-      } else {
-        setTags(MOCK_TAGS);
-      }
-
-      if (localRevisions) setRevisions(JSON.parse(localRevisions));
-    } catch (e) {
-      console.error('Error loading local data:', e);
-      setPrompts(MOCK_PROMPTS);
-      setCategories(MOCK_CATEGORIES);
-      setTypes(MOCK_TYPES);
-      setTags(MOCK_TAGS);
-    }
-
+    setPrompts(MOCK_PROMPTS);
+    setCategories(MOCK_CATEGORIES);
+    setTypes(MOCK_TYPES);
+    setTags(MOCK_TAGS);
+    setRevisions({});
     setLoading(false);
   };
 
@@ -233,21 +186,14 @@ export default function App() {
       const { data: typeData } = await supabase.from('types').select('*').order('name');
       const { data: tagData } = await supabase.from('prompt_tags').select('*').order('name');
 
-      if (promptsData && promptsData.length > 0) {
-        setPrompts(promptsData);
-      } else {
-        // Fallback to mock data if DB is empty
-        setPrompts(MOCK_PROMPTS);
-      }
-
+      setPrompts(promptsData || []);
       setCategories(catData?.length > 0 ? catData : MOCK_CATEGORIES);
       setTypes(typeData?.length > 0 ? typeData : MOCK_TYPES);
       setTags(tagData?.length > 0 ? tagData : MOCK_TAGS);
 
     } catch (error) {
       console.error('Error fetching data:', error);
-      setToast({ show: true, message: 'Errore nel caricamento dei dati. Utilizzo dati locali.', type: 'error' });
-      loadMockData();
+      setToast({ show: true, message: 'Errore nel caricamento dei dati.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -288,13 +234,9 @@ export default function App() {
   const handleDelete = async (id) => {
     ensureAuth(async () => {
       try {
-        if (session) {
-          const { error } = await supabase.from('prompts').delete().eq('id', id);
-          if (error) throw error;
-          fetchData();
-        } else {
-          setPrompts(prompts.filter(p => p.id !== id));
-        }
+        const { error } = await supabase.from('prompts').delete().eq('id', id);
+        if (error) throw error;
+        await fetchData(); // Always refetch from DB
         setToast({ show: true, message: 'Prompt eliminato con successo', type: 'success' });
         triggerHaptic('warning');
       } catch (error) {
@@ -314,55 +256,26 @@ export default function App() {
       };
 
       try {
-        if (session) {
-          if (modalInitialData) {
-            if (saveAsRevision) {
-              await supabase.from('prompt_revisions').insert([{
-                prompt_id: modalInitialData.id,
-                title: modalInitialData.title,
-                content: modalInitialData.content,
-                category: modalInitialData.category,
-                type: modalInitialData.type,
-                tags: modalInitialData.tags || [],
-              }]);
-            }
-            const { error } = await supabase.from('prompts').update(newPrompt).eq('id', modalInitialData.id);
-            if (error) throw error;
-            setToast({ show: true, message: 'Prompt aggiornato!', type: 'success' });
-          } else {
-            const { error } = await supabase.from('prompts').insert([{ ...newPrompt, is_favorite: false }]);
-            if (error) throw error;
-            setToast({ show: true, message: 'Nuovo prompt salvato!', type: 'success' });
+        if (modalInitialData) {
+          if (saveAsRevision) {
+            await supabase.from('prompt_revisions').insert([{
+              prompt_id: modalInitialData.id,
+              title: modalInitialData.title,
+              content: modalInitialData.content,
+              category: modalInitialData.category,
+              type: modalInitialData.type,
+              tags: modalInitialData.tags || [],
+            }]);
           }
-          fetchData();
+          const { error } = await supabase.from('prompts').update(newPrompt).eq('id', modalInitialData.id);
+          if (error) throw error;
+          setToast({ show: true, message: 'Prompt aggiornato!', type: 'success' });
         } else {
-          // Local Mode
-          if (modalInitialData) {
-            if (saveAsRevision) {
-              const revId = Date.now().toString();
-              const newRev = {
-                id: revId,
-                prompt_id: modalInitialData.id,
-                title: modalInitialData.title,
-                content: modalInitialData.content,
-                category: modalInitialData.category,
-                type: modalInitialData.type,
-                tags: modalInitialData.tags || [],
-                versionDate: new Date().toISOString()
-              };
-              setRevisions(prev => ({
-                ...prev,
-                [modalInitialData.id]: [newRev, ...(prev[modalInitialData.id] || [])]
-              }));
-            }
-            setPrompts(prompts.map(p => p.id === modalInitialData.id ? { ...p, ...newPrompt } : p));
-            setToast({ show: true, message: 'Prompt aggiornato (locale)!', type: 'success' });
-          } else {
-            const id = Date.now().toString();
-            setPrompts([{ ...newPrompt, id, is_favorite: false, created_at: new Date().toISOString() }, ...prompts]);
-            setToast({ show: true, message: 'Nuovo prompt salvato (locale)!', type: 'success' });
-          }
+          const { error } = await supabase.from('prompts').insert([{ ...newPrompt, is_favorite: false }]);
+          if (error) throw error;
+          setToast({ show: true, message: 'Nuovo prompt salvato!', type: 'success' });
         }
+        await fetchData(); // Always refetch from DB
         setIsModalOpen(false);
       } catch (error) {
         console.error('Error saving:', error);
@@ -374,13 +287,9 @@ export default function App() {
   const handleToggleFavorite = async (id, currentStatus) => {
     ensureAuth(async () => {
       try {
-        if (session) {
-          const { error } = await supabase.from('prompts').update({ is_favorite: !currentStatus }).eq('id', id);
-          if (error) throw error;
-          fetchData();
-        } else {
-          setPrompts(prompts.map(p => p.id === id ? { ...p, is_favorite: !currentStatus } : p));
-        }
+        const { error } = await supabase.from('prompts').update({ is_favorite: !currentStatus }).eq('id', id);
+        if (error) throw error;
+        await fetchData(); // Always refetch from DB
         setToast({ show: true, message: !currentStatus ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti', type: 'success' });
         triggerHaptic('light');
       } catch (error) {
