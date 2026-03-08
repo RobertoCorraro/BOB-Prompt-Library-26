@@ -1,14 +1,61 @@
 import React from 'react';
-import { X, Copy, Zap, Clock, Tag, Type, Calendar } from 'lucide-react';
-import { triggerHaptic } from '../lib/utils';
+import { X, Copy, Zap, Clock, Tag, Type, Calendar, Edit2, Trash2, CopyPlus, Star, Check } from 'lucide-react';
+import { triggerHaptic, extractVariables } from '../lib/utils';
 
-export default function PromptViewModal({ isOpen, onClose, prompt, onCopy, onCompile }) {
+export default function PromptViewModal({
+    isOpen,
+    onClose,
+    prompt,
+    onCopy,
+    onCompile,
+    onEdit,
+    onDelete,
+    onDuplicate,
+    onToggleFavorite
+}) {
+    const [copied, setCopied] = React.useState(false);
+
     if (!isOpen || !prompt) return null;
 
     const handleCopy = () => {
         triggerHaptic('success');
-        navigator.clipboard.writeText(prompt.content);
+        const variables = extractVariables(prompt.content);
+        let contentToCopy = prompt.content;
+
+        if (variables.length > 0) {
+            const variablesBlock = `#Variabili utili\n${variables.map(v => `- {{${v}}}: _____`).join('\n')}\n\n`;
+            contentToCopy = variablesBlock + contentToCopy;
+        }
+
+        navigator.clipboard.writeText(contentToCopy);
         onCopy(prompt.title);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleEdit = () => {
+        triggerHaptic('light');
+        onClose();
+        onEdit(prompt);
+    };
+
+    const handleDelete = () => {
+        triggerHaptic('warning');
+        if (window.confirm('Sei sicuro di voler eliminare questo prompt?')) {
+            onDelete(prompt.id);
+            onClose();
+        }
+    };
+
+    const handleDuplicate = () => {
+        triggerHaptic('light');
+        onDuplicate(prompt);
+        onClose();
+    };
+
+    const handleToggleFavorite = () => {
+        triggerHaptic('light');
+        onToggleFavorite(prompt.id, prompt.is_favorite);
     };
 
     return (
@@ -91,19 +138,66 @@ export default function PromptViewModal({ isOpen, onClose, prompt, onCopy, onCom
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex gap-4">
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex flex-wrap gap-2 sm:gap-3">
+                    {/* Primary Actions */}
                     <button
                         onClick={handleCopy}
-                        className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2 shadow-sm"
+                        className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 ${copied
+                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            }`}
                     >
-                        <Copy className="w-4.5 h-4.5" /> Copia Prompt
+                        {copied ? <Check className="w-4.5 h-4.5" /> : <Copy className="w-4.5 h-4.5" />}
+                        <span>{copied ? 'Copiato!' : 'Copia'}</span>
                     </button>
+
                     <button
                         onClick={() => { onClose(); onCompile(prompt); }}
-                        className="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2"
+                        className="flex-1 min-w-[140px] bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 active:scale-95"
                     >
-                        <Zap className="w-4.5 h-4.5 fill-current" /> Usa Prompt
+                        <Zap className="w-4.5 h-4.5 fill-current" />
+                        <span>Usa Prompt</span>
                     </button>
+
+                    {/* Secondary Actions Row */}
+                    <div className="w-full flex gap-2">
+                        <button
+                            onClick={handleToggleFavorite}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all active:scale-95 ${prompt.is_favorite
+                                    ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-500'
+                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                }`}
+                        >
+                            <Star className={`w-4 h-4 ${prompt.is_favorite ? 'fill-current' : ''}`} />
+                            <span>{prompt.is_favorite ? 'Preferito' : 'Salva'}</span>
+                        </button>
+
+                        <button
+                            onClick={handleEdit}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold transition-all active:scale-95"
+                        >
+                            <Edit2 className="w-4 h-4" />
+                            <span>Modifica</span>
+                        </button>
+
+                        {onDuplicate && (
+                            <button
+                                onClick={handleDuplicate}
+                                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold transition-all active:scale-95"
+                            >
+                                <CopyPlus className="w-4 h-4" />
+                                <span>Duplica</span>
+                            </button>
+                        )}
+
+                        <button
+                            onClick={handleDelete}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-red-500/70 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 text-xs font-bold transition-all active:scale-95"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Elimina</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

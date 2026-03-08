@@ -15,6 +15,7 @@ import VariableModal from './components/VariableModal';
 import PromptViewModal from './components/PromptViewModal';
 import SettingsSidebar from './components/SettingsSidebar';
 import AuthGuardModal from './components/AuthGuardModal';
+import BottomNav from './components/BottomNav';
 
 // Mock data for when Supabase is not connected
 const MOCK_CATEGORIES = [
@@ -609,10 +610,23 @@ export default function App() {
 
       <button
         onClick={() => ensureAuth(() => { setModalInitialData(null); setIsModalOpen(true); })}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-transform active:scale-95"
+        className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95"
       >
         <Plus className="w-7 h-7" />
       </button>
+
+      <BottomNav
+        activeTab={activeCategory === 'Tutti' ? 'home' : 'home'}
+        onTabChange={(tab) => {
+          if (tab === 'home') setActiveCategory('Tutti');
+        }}
+        onNewPrompt={() => ensureAuth(() => { setModalInitialData(null); setIsModalOpen(true); })}
+        showFavorites={showFavorites}
+        onToggleFavorites={() => { triggerHaptic('light'); setShowFavorites(!showFavorites); }}
+        isLoggedIn={isLoggedIn}
+        onLogin={() => setIsLoginModalOpen(true)}
+        onLogout={handleLogout}
+      />
 
       <SettingsSidebar
         isOpen={isSidebarOpen}
