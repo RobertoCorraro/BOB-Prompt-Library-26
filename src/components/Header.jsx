@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Settings, LogOut, Moon, Sun, Heart } from 'lucide-react';
+import { Search, Settings, LogOut, Moon, Sun, Heart, Download } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
 
-export default function Header({ onSearch, onSettings, userEmail, showFavorites, onToggleFavorites, isLoggedIn, onLogin, onLogout }) {
+export default function Header({ onSearch, onSettings, userEmail, showFavorites, onToggleFavorites, isLoggedIn, onLogin, onLogout, onExport }) {
     const [isDark, setIsDark] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -70,6 +70,18 @@ export default function Header({ onSearch, onSettings, userEmail, showFavorites,
                     >
                         {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                         <span className="text-[10px] font-bold hidden xs:block">Tema</span>
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            triggerHaptic('light');
+                            onExport();
+                        }}
+                        className="p-1.5 sm:p-2 text-slate-400 hover:text-blue-500 dark:text-slate-500 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex flex-col items-center gap-0.5 transition-all"
+                        title="Esporta Prompt"
+                    >
+                        <Download className="w-5 h-5" />
+                        <span className="text-[10px] font-bold hidden xs:block">Esporta</span>
                     </button>
 
                     <button

@@ -14,6 +14,7 @@ import SettingsModal from './components/SettingsModal';
 import VariableModal from './components/VariableModal';
 import PromptViewModal from './components/PromptViewModal';
 import SettingsSidebar from './components/SettingsSidebar';
+import AuthGuardModal from './components/AuthGuardModal';
 
 // Mock data for when Supabase is not connected
 const MOCK_CATEGORIES = [
@@ -96,6 +97,7 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsMode, setSettingsMode] = useState('categories');
+  const [isAuthGuardOpen, setIsAuthGuardOpen] = useState(false);
 
   // Revisions State (Mock)
   const [revisions, setRevisions] = useState({});
@@ -250,7 +252,7 @@ export default function App() {
       action();
     } else {
       triggerHaptic('warning');
-      setIsLoginModalOpen(true);
+      setIsAuthGuardOpen(true);
     }
   };
 
@@ -360,6 +362,40 @@ export default function App() {
         setIsSaving(false);
       }
     });
+  };
+
+  const handleExportPrompts = () => {
+    try {
+      triggerHaptic('success');
+
+      const exportData = {
+        version: "1.0.0",
+        exported_at: new Date().toISOString(),
+        prompts: filteredPrompts.map(p => ({
+          title: p.title,
+          content: p.content,
+          category: p.category,
+          type: p.type,
+          tags: p.tags,
+          is_favorite: p.is_favorite
+        }))
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `bob-prompts-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setToast({ show: true, message: `${filteredPrompts.length} prompt esportati!`, type: 'success' });
+    } catch (error) {
+      console.error('Export failed:', error);
+      setToast({ show: true, message: 'Errore durante l\'esportazione', type: 'error' });
+    }
   };
 
   const handleOpenCompile = (prompt) => {
@@ -483,6 +519,7 @@ export default function App() {
         isLoggedIn={isLoggedIn}
         onLogin={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
+        onExport={handleExportPrompts}
       />
 
       {/* Global saving indicator */}
@@ -666,6 +703,12 @@ export default function App() {
         prompt={viewModal.prompt}
         onCopy={handleCopy}
         onCompile={handleOpenCompile}
+      />
+
+      <AuthGuardModal
+        isOpen={isAuthGuardOpen}
+        onClose={() => setIsAuthGuardOpen(false)}
+        onLogin={() => setIsLoginModalOpen(true)}
       />
     </div>
   );
