@@ -125,17 +125,15 @@ export default function App() {
   }, [viewMode]);
 
   useEffect(() => {
-    // Only persist to local storage if not logged in or if we want a local cache
-    // Let's always persist to have a fallback, but mark it as 'local'
-    // Prevent overwriting with empty data during initial load
-    if (!loading && prompts.length > 0) {
-      if (!session && !isAuthenticated) {
-        localStorage.setItem('bob_local_prompts', JSON.stringify(prompts));
-        localStorage.setItem('bob_local_categories', JSON.stringify(categories));
-        localStorage.setItem('bob_local_types', JSON.stringify(types));
-        localStorage.setItem('bob_local_tags', JSON.stringify(tags));
-        localStorage.setItem('bob_local_revisions', JSON.stringify(revisions));
-      }
+    // Only persist to local storage if there is NO Supabase session.
+    // This allows local guest and local admin modes to persist changes.
+    // We remove the prompts.length > 0 guard to allow persisting empty lists after deletions.
+    if (!loading && !session) {
+      localStorage.setItem('bob_local_prompts', JSON.stringify(prompts));
+      localStorage.setItem('bob_local_categories', JSON.stringify(categories));
+      localStorage.setItem('bob_local_types', JSON.stringify(types));
+      localStorage.setItem('bob_local_tags', JSON.stringify(tags));
+      localStorage.setItem('bob_local_revisions', JSON.stringify(revisions));
     }
   }, [prompts, categories, types, tags, revisions, session, isAuthenticated, loading]);
 
@@ -174,25 +172,49 @@ export default function App() {
   }, []);
 
   const loadMockData = () => {
-    const localPrompts = localStorage.getItem('bob_local_prompts');
-    const localCategories = localStorage.getItem('bob_local_categories');
-    const localTypes = localStorage.getItem('bob_local_types');
-    const localTags = localStorage.getItem('bob_local_tags');
-    const localRevisions = localStorage.getItem('bob_local_revisions');
+    try {
+      const localPrompts = localStorage.getItem('bob_local_prompts');
+      const localCategories = localStorage.getItem('bob_local_categories');
+      const localTypes = localStorage.getItem('bob_local_types');
+      const localTags = localStorage.getItem('bob_local_tags');
+      const localRevisions = localStorage.getItem('bob_local_revisions');
 
-    if (localPrompts) setPrompts(JSON.parse(localPrompts));
-    else setPrompts(MOCK_PROMPTS);
+      if (localPrompts) {
+        const parsed = JSON.parse(localPrompts);
+        setPrompts(parsed.length > 0 ? parsed : MOCK_PROMPTS);
+      } else {
+        setPrompts(MOCK_PROMPTS);
+      }
 
-    if (localCategories) setCategories(JSON.parse(localCategories));
-    else setCategories(MOCK_CATEGORIES);
+      if (localCategories) {
+        const parsed = JSON.parse(localCategories);
+        setCategories(parsed.length > 0 ? parsed : MOCK_CATEGORIES);
+      } else {
+        setCategories(MOCK_CATEGORIES);
+      }
 
-    if (localTypes) setTypes(JSON.parse(localTypes));
-    else setTypes(MOCK_TYPES);
+      if (localTypes) {
+        const parsed = JSON.parse(localTypes);
+        setTypes(parsed.length > 0 ? parsed : MOCK_TYPES);
+      } else {
+        setTypes(MOCK_TYPES);
+      }
 
-    if (localTags) setTags(JSON.parse(localTags));
-    else setTags(MOCK_TAGS);
+      if (localTags) {
+        const parsed = JSON.parse(localTags);
+        setTags(parsed.length > 0 ? parsed : MOCK_TAGS);
+      } else {
+        setTags(MOCK_TAGS);
+      }
 
-    if (localRevisions) setRevisions(JSON.parse(localRevisions));
+      if (localRevisions) setRevisions(JSON.parse(localRevisions));
+    } catch (e) {
+      console.error('Error loading local data:', e);
+      setPrompts(MOCK_PROMPTS);
+      setCategories(MOCK_CATEGORIES);
+      setTypes(MOCK_TYPES);
+      setTags(MOCK_TAGS);
+    }
 
     setLoading(false);
   };
