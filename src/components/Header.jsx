@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Settings, LogOut, Moon, Sun, Heart } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
 
-export default function Header({ onSearch, onSettings, userEmail, showFavorites, onToggleFavorites }) {
+export default function Header({ onSearch, onSettings, userEmail, showFavorites, onToggleFavorites, isLoggedIn, onLogin, onLogout }) {
     const [isDark, setIsDark] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'dark' ||
@@ -86,11 +86,31 @@ export default function Header({ onSearch, onSettings, userEmail, showFavorites,
 
                     <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
 
-                    <div className="hidden sm:flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900 border border-violet-200 dark:border-violet-800 flex items-center justify-center text-violet-700 dark:text-violet-300 font-medium text-xs">
-                            {userEmail ? userEmail[0].toUpperCase() : 'U'}
-                        </div>
-                    </div>
+                    {isLoggedIn ? (
+                        <button
+                            onClick={() => {
+                                triggerHaptic('light');
+                                onLogout();
+                            }}
+                            className="p-1.5 sm:p-2 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex flex-col items-center gap-0.5 transition-all"
+                            title="Esci"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            <span className="text-[10px] font-bold hidden xs:block">Esci</span>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => {
+                                triggerHaptic('light');
+                                onLogin();
+                            }}
+                            className="p-1.5 sm:p-2 text-slate-400 hover:text-emerald-500 dark:text-slate-500 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex flex-col items-center gap-0.5 transition-all"
+                            title="Accedi"
+                        >
+                            <LogOut className="w-5 h-5 rotate-180" />
+                            <span className="text-[10px] font-bold hidden xs:block">Accedi</span>
+                        </button>
+                    )}
                 </div>
             </div>
         </header>

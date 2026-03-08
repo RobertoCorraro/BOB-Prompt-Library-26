@@ -47,30 +47,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
     const handleSubmit = async (e) => {
         e.preventDefault();
         triggerHaptic('success');
-
-        try {
-            const { data, error } = await supabase.from('prompts').insert([
-                {
-                    title: formData.title,
-                    content: formData.content,
-                    category: formData.category,
-                    type: formData.type,
-                    tags: formData.tags,
-                },
-            ]);
-
-            if (error) {
-                console.error('Errore durante il salvataggio:', error);
-                alert('Errore durante il salvataggio del prompt.');
-            } else {
-                console.log('Prompt salvato con successo:', data);
-                alert('Prompt salvato con successo!');
-                onSave(formData, false); // Standard save
-            }
-        } catch (err) {
-            console.error('Errore imprevisto:', err);
-            alert('Si è verificato un errore imprevisto.');
-        }
+        onSave(formData, false); // Let parent handle everything
     };
 
     const handleSaveRevision = () => {

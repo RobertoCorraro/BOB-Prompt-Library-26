@@ -94,3 +94,24 @@ INSERT INTO prompt_tags (name) VALUES
   ('output'),
   ('variabili')
 ON CONFLICT (name) DO NOTHING;
+
+-- Create the prompt_revisions table
+create table prompt_revisions (
+  id uuid default gen_random_uuid() primary key,
+  prompt_id uuid references prompts(id) on delete cascade not null,
+  title text not null,
+  content text not null,
+  category text not null,
+  type text not null,
+  tags text[] default '{}',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS
+alter table prompt_revisions enable row level security;
+
+-- Policies
+create policy "Enable read access for all users" on prompt_revisions for select using (true);
+create policy "Enable insert access for all users" on prompt_revisions for insert with check (true);
+create policy "Enable update access for all users" on prompt_revisions for update using (true);
+create policy "Enable delete access for all users" on prompt_revisions for delete using (true);

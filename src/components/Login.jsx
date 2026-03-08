@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Lock, User, AlertCircle } from 'lucide-react';
+import { BookOpen, Lock, User, AlertCircle, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, onClose }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -10,15 +10,20 @@ export default function Login({ onLogin }) {
     const [connectionStatus, setConnectionStatus] = useState('checking');
 
     useEffect(() => {
+        const handleEsc = (e) => {
+            if (e.key === 'Escape' && onClose) onClose();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [onClose]);
+
+    useEffect(() => {
         async function checkConnection() {
             try {
                 const { error } = await supabase.from('prompts').select('count', { count: 'exact', head: true });
                 if (error) {
-                    // Ignore 406 Not Acceptable which might happen with head:true on some configs, 
-                    // but usually head:true is fine. If table doesn't exist, it throws.
-                    // If strictly network error, it throws.
-                    if (error.code !== 'PGRST116') { // Allow some loose errors if it proves connectivity 
-                        // actually let's just assume connected if we get a response, ensuring env vars are there is the main thing
+                    if (error.code !== 'PGRST116') {
+                        // connection issues
                     }
                 }
                 setConnectionStatus('connected');
@@ -36,17 +41,13 @@ export default function Login({ onLogin }) {
         setIsLoading(true);
 
         try {
-            // 1. Try Local Auth first (the ones in auth.config.js)
-            // This ensures the user can always enter with the default credentials
             const isLocalValid = onLogin(username, password);
 
             if (isLocalValid) {
-                // Success! The App component handles the rest
                 setIsLoading(false);
                 return;
             }
 
-            // 2. Fallback/Optional: Try Supabase Auth
             const { error } = await supabase.auth.signInWithPassword({
                 email: username,
                 password: password,
@@ -66,8 +67,16 @@ export default function Login({ onLogin }) {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
+        <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-md relative">
+                {onClose && (
+                    <button
+                        onClick={onClose}
+                        className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                )}
                 {/* Logo and Title */}
                 <div className="text-center mb-8 animate-in fade-in slide-in-from-top duration-700">
                     <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl shadow-xl mb-4 transform hover:scale-105 transition-transform duration-300">
