@@ -77,10 +77,10 @@ export default function Login({ onLogin, onClose }) {
                 )}
                 {/* Logo and Title */}
                 <div className="text-center mb-8 animate-in fade-in slide-in-from-top duration-700">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl shadow-xl mb-4 transform hover:scale-105 transition-transform duration-300">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-sky-600 to-blue-600 rounded-2xl shadow-xl mb-4 transform hover:scale-105 transition-transform duration-300">
                         <BookOpen className="w-10 h-10 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent mb-2">
                         BOB Prompt Library
                     </h1>
                     <p className="text-slate-600 text-sm">
@@ -105,7 +105,7 @@ export default function Login({ onLogin, onClose }) {
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
+                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
                                     placeholder="Inserisci username"
                                     required
                                     autoFocus
@@ -127,7 +127,7 @@ export default function Login({ onLogin, onClose }) {
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
+                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
                                     placeholder="Inserisci password"
                                     required
                                 />
@@ -146,7 +146,7 @@ export default function Login({ onLogin, onClose }) {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isLoading ? (
                                 <>
@@ -185,11 +185,19 @@ export default function Login({ onLogin, onClose }) {
                     <div className="mt-6 pt-6 border-t border-slate-200">
                         <p className="text-xs text-slate-500 text-center">
                             Per modificare le credenziali, edita il file{' '}
-                            <code className="bg-slate-100 px-1.5 py-0.5 rounded text-violet-600">
+                            <code className="bg-slate-100 px-1.5 py-0.5 rounded text-sky-600">
                                 src/auth.config.js
                             </code>
                         </p>
                     </div>
+                    {/* Bottom Close Button for Mobile */}
+                    <button
+                        onClick={onClose}
+                        className="w-full mt-6 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <X className="w-4 h-4" />
+                        <span>CHIUDI</span>
+                    </button>
                 </div>
 
                 {/* Footer */}

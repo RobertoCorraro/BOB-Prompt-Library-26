@@ -31,16 +31,16 @@ export default function AuthGuardModal({ isOpen, onClose, onLogin }) {
                     </div>
 
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                        Azionare Sicura
+                        Accedi
                     </h3>
 
                     <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                        Attenzione, devi accedere al tuo account per apportare modifiche.
+                        Attenzione, devi fare log-in per apportare modifiche.
                     </p>
 
                     <button
                         onClick={handleLoginClick}
-                        className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-violet-200 dark:shadow-none transition-all active:scale-[0.98] mb-3"
+                        className="w-full flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-sky-200 dark:shadow-none transition-all active:scale-[0.98] mb-3"
                     >
                         <LogIn className="w-5 h-5" />
                         <span>ACCEDI</span>
@@ -54,12 +54,12 @@ export default function AuthGuardModal({ isOpen, onClose, onLogin }) {
                     </button>
                 </div>
 
-                {/* Close Button top-right */}
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
                 >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
+                    <span>CHIUDI</span>
                 </button>
             </div>
         </div>

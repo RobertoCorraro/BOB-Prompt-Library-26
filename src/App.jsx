@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Loader2, LayoutGrid, List, X, Braces, RefreshCw, Copy, ArrowUpDown } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { AUTH_CONFIG } from './auth.config';
@@ -23,7 +23,7 @@ const MOCK_CATEGORIES = [
   { id: '5', name: 'Coding', color: COLOR_PALETTE[9] },        // Pink
   { id: '4', name: 'Copywriting', color: COLOR_PALETTE[3] },   // Green
   { id: '2', name: 'Marketing', color: COLOR_PALETTE[0] },     // Red
-  { id: '1', name: 'Psicologia', color: COLOR_PALETTE[8] },    // Purple
+  { id: '1', name: 'Psicologia', color: COLOR_PALETTE[8] },    // Sky Blue
 ];
 
 const MOCK_TYPES = [
@@ -119,6 +119,8 @@ export default function App() {
   // Toast State
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+  const searchInputRef = useRef(null);
+
   useEffect(() => {
     if (toast.show) {
       const timer = setTimeout(() => setToast({ ...toast, show: false }), 3000);
@@ -143,11 +145,7 @@ export default function App() {
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
         setSession(session);
-        if (session || sessionStorage.getItem('bob_authenticated') === 'true') {
-          fetchData();
-        } else {
-          loadMockData();
-        }
+        fetchData(); // Always fetch data
       })
       .catch(error => {
         console.error('Auth check failed:', error);
@@ -158,11 +156,7 @@ export default function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session || sessionStorage.getItem('bob_authenticated') === 'true') {
-        fetchData();
-      } else {
-        loadMockData();
-      }
+      fetchData(); // Always fetch data
     });
 
     return () => subscription.unsubscribe();
@@ -170,9 +164,7 @@ export default function App() {
 
   // Re-fetch data whenever sort preferences change
   useEffect(() => {
-    if (session || isAuthenticated) {
-      fetchData();
-    }
+    fetchData();
   }, [sortBy, sortDir]);
 
   // Loads static mock data for guests (no localStorage, in-memory only).
@@ -504,7 +496,7 @@ export default function App() {
   if (loading && prompts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-sky-600" />
       </div>
     );
   }
@@ -512,6 +504,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200 pb-20 sm:pb-10">
       <Header
+        searchRef={searchInputRef}
         onSearch={setSearchQuery}
         onSettings={() => setIsSidebarOpen(true)}
         userEmail={session?.user?.email || (isAuthenticated ? AUTH_CONFIG.username : '')}
@@ -525,7 +518,7 @@ export default function App() {
 
       {/* Global saving indicator */}
       {isSaving && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-violet-600 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg animate-pulse">
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-sky-600 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg animate-pulse">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           <span>Salvataggio...</span>
         </div>
@@ -553,7 +546,7 @@ export default function App() {
                     setSortBy(nextBy);
                     localStorage.setItem('bob_sort_by', nextBy);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-700 dark:hover:text-violet-400 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-sky-900/30 hover:text-sky-700 dark:hover:text-sky-400 transition-colors"
                   title={sortBy === 'created_at' ? 'Ordine: Data Creazione' : 'Ordine: Data Modifica'}
                 >
                   <ArrowUpDown className="w-3.5 h-3.5" />
@@ -567,15 +560,15 @@ export default function App() {
                   setSortDir(nextDir);
                   localStorage.setItem('bob_sort_dir', nextDir);
                 }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-700 dark:hover:text-violet-400 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-sky-900/30 hover:text-sky-700 dark:hover:text-sky-400 transition-colors"
                 title={sortDir === 'desc' ? 'Dal più recente' : 'Dal più vecchio'}
               >
                 {sortDir === 'desc' ? '↓ Recenti' : '↑ Vecchi'}
               </button>
               {/* View Mode Toggle */}
               <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-violet-600 shadow-sm' : 'text-slate-400'}`}><LayoutGrid className="w-4 h-4" /></button>
-                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-violet-600 shadow-sm' : 'text-slate-400'}`}><List className="w-4 h-4" /></button>
+                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400'}`}><LayoutGrid className="w-4 h-4" /></button>
+                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400'}`}><List className="w-4 h-4" /></button>
               </div>
             </div>
           </div>
@@ -610,7 +603,7 @@ export default function App() {
 
       <button
         onClick={() => ensureAuth(() => { setModalInitialData(null); setIsModalOpen(true); })}
-        className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95"
+        className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95"
       >
         <Plus className="w-7 h-7" />
       </button>
@@ -619,6 +612,10 @@ export default function App() {
         activeTab={activeCategory === 'Tutti' ? 'home' : 'home'}
         onTabChange={(tab) => {
           if (tab === 'home') setActiveCategory('Tutti');
+          if (tab === 'search') {
+            triggerHaptic('light');
+            setTimeout(() => searchInputRef.current?.focus(), 100);
+          }
         }}
         onNewPrompt={() => ensureAuth(() => { setModalInitialData(null); setIsModalOpen(true); })}
         showFavorites={showFavorites}
@@ -691,8 +688,8 @@ export default function App() {
             </div>
             <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t flex gap-4">
               <button
-                onClick={() => { triggerHaptic('success'); navigator.clipboard.writeText(handleCompile()); setCompileModal({ ...compileModal, isOpen: false }); }}
-                className="flex-1 bg-violet-600 text-white font-bold py-3 rounded-xl"
+                onClick={() => { triggerHaptic('success'); navigator.clipboard.writeText(handleCompile()); setCompileModal({ ...compileModal, isOpen: false }); setToast({ show: true, message: 'Prompt compilato e copiato!', type: 'success' }); }}
+                className="flex-1 bg-sky-600 text-white font-bold py-3 rounded-xl"
               >
                 Copia & Chiudi
               </button>

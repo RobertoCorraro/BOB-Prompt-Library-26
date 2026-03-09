@@ -40,7 +40,7 @@ export default function BottomNav({
                         <button
                             key={item.id}
                             onClick={() => handleTabClick(item)}
-                            className={`flex flex-col items-center justify-center flex-1 gap-1 transition-colors ${isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500'
+                            className={`flex flex-col items-center justify-center flex-1 gap-1 transition-colors ${isActive ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400 dark:text-slate-500'
                                 }`}
                         >
                             <Icon className={`w-5 h-5 ${isActive ? 'fill-current opacity-20' : ''}`} />
@@ -56,7 +56,7 @@ export default function BottomNav({
                             triggerHaptic('medium');
                             onNewPrompt();
                         }}
-                        className="w-14 h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg shadow-violet-500/40 flex items-center justify-center border-4 border-white dark:border-slate-900 transition-transform active:scale-90"
+                        className="w-14 h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-lg shadow-sky-500/40 flex items-center justify-center border-4 border-white dark:border-slate-900 transition-transform active:scale-90"
                     >
                         <Plus className="w-8 h-8" />
                     </button>
@@ -69,7 +69,7 @@ export default function BottomNav({
                         <button
                             key={item.id}
                             onClick={() => handleTabClick(item)}
-                            className={`flex flex-col items-center justify-center flex-1 gap-1 transition-colors ${isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500'
+                            className={`flex flex-col items-center justify-center flex-1 gap-1 transition-colors ${isActive ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400 dark:text-slate-500'
                                 }`}
                         >
                             <Icon className={`w-5 h-5 ${isActive ? 'fill-current' : (item.isFavorite && showFavorites ? 'text-rose-500 fill-rose-500' : '')}`} />

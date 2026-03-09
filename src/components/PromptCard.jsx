@@ -27,6 +27,21 @@ export default function PromptCard({
 
     const variables = extractVariables(prompt.content);
 
+    const renderContentWithHighlights = (content) => {
+        if (!content) return null;
+        const parts = content.split(/(\{\{[^{}]+\}\})/g);
+        return parts.map((part, i) => {
+            if (part.startsWith('{{') && part.endsWith('}}')) {
+                return (
+                    <strong key={i} className="text-sky-600 dark:text-sky-400 font-bold">
+                        {part}
+                    </strong>
+                );
+            }
+            return part;
+        });
+    };
+
     const handleCopy = (e) => {
         if (e) e.stopPropagation();
         triggerHaptic('success');
@@ -92,8 +107,8 @@ export default function PromptCard({
                     </div>
                 </div>
                 <div className="flex items-stretch border-l border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/50">
-                    <button onClick={handleView} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-all active:scale-95" title="Visualizza"><Eye className="w-5 h-5" /></button>
-                    <button onClick={handleCopy} className={`w-12 sm:w-16 flex items-center justify-center transition-all active:scale-95 ${isCopied ? 'text-green-600 dark:text-green-400' : 'text-slate-400 hover:text-violet-600 dark:hover:text-violet-400'}`} title="Copia">
+                    <button onClick={handleView} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-all active:scale-95" title="Visualizza"><Eye className="w-5 h-5" /></button>
+                    <button onClick={handleCopy} className={`w-12 sm:w-16 flex items-center justify-center transition-all active:scale-95 ${isCopied ? 'text-green-600 dark:text-green-400' : 'text-slate-400 hover:text-sky-600 dark:hover:text-sky-400'}`} title="Copia">
                         {isCopied ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Copy className="w-5 h-5" />}
                     </button>
                     <button onClick={handleEdit} className="w-12 sm:w-16 flex items-center justify-center text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-95" title="Modifica"><Edit2 className="w-5 h-5" /></button>
@@ -112,7 +127,7 @@ export default function PromptCard({
                     {prompt.category}
                 </span>
                 <div className="flex items-center bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <button onClick={handleCopy} className={`p-2.5 transition-colors border-r border-slate-100 dark:border-slate-700 ${isCopied ? 'text-green-600' : 'text-slate-400 hover:text-violet-600'}`} title="Copia">
+                    <button onClick={handleCopy} className={`p-2.5 transition-colors border-r border-slate-100 dark:border-slate-700 ${isCopied ? 'text-green-600' : 'text-slate-400 hover:text-sky-600'}`} title="Copia">
                         <Copy className="w-4.5 h-4.5" />
                     </button>
                     <button onClick={handleEdit} className="p-2.5 text-slate-400 hover:text-blue-600 transition-colors border-r border-slate-100 dark:border-slate-700" title="Modifica"><Edit2 className="w-4.5 h-4.5" /></button>
@@ -125,10 +140,10 @@ export default function PromptCard({
             </div>
 
             {/* Content Area */}
-            <div onClick={handleView} className="p-5 cursor-pointer relative active:bg-slate-50 dark:active:bg-slate-700/50 transition-colors flex-1">
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight mb-3 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors pr-2">{prompt.title}</h3>
+            <div onClick={() => onCompile(prompt)} className="p-5 cursor-pointer relative active:bg-slate-50 dark:active:bg-slate-700/50 transition-colors flex-1">
+                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight mb-3 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors pr-2">{prompt.title}</h3>
                 <div className="relative">
-                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap line-clamp-3">{prompt.content}</p>
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap line-clamp-3">{renderContentWithHighlights(prompt.content)}</p>
                     <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/0 to-transparent dark:from-slate-800/90 dark:via-slate-800/0 pointer-events-none" />
                 </div>
 
@@ -160,7 +175,7 @@ export default function PromptCard({
 
             {/* Footer View Button */}
             <div onClick={handleView} className="bg-slate-50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 py-3 flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group/view">
-                <div className="flex items-center gap-2 text-slate-400 group-hover/view:text-violet-600 transition-colors">
+                <div className="flex items-center gap-2 text-slate-400 group-hover/view:text-sky-600 transition-colors">
                     <Eye className="w-4.5 h-4.5" />
                     <span className="text-xs font-bold uppercase tracking-wider">Visualizza</span>
                 </div>

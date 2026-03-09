@@ -60,8 +60,8 @@ export default function VariableModal({ isOpen, onClose, prompt, variables }) {
             >
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
                     <div className="flex items-center gap-2">
-                        <div className="p-2 bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 rounded-lg">
-                            <Zap className="w-5 h-5 fill-violet-600 dark:fill-violet-400" />
+                        <div className="p-2 bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400 rounded-lg">
+                            <Zap className="w-5 h-5 fill-sky-600 dark:fill-sky-400" />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-tight">Compila Prompt</h2>
@@ -88,7 +88,7 @@ export default function VariableModal({ isOpen, onClose, prompt, variables }) {
                                     type="text"
                                     value={values[variable] || ''}
                                     onChange={(e) => handleInputChange(variable, e.target.value)}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-500/20 outline-none transition-all bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-slate-800 dark:text-slate-100 text-base"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:focus:ring-sky-500/20 outline-none transition-all bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-slate-800 dark:text-slate-100 text-base"
                                     placeholder={`Valore per ${variable}...`}
                                     autoFocus={variables.indexOf(variable) === 0}
                                 />
@@ -97,13 +97,20 @@ export default function VariableModal({ isOpen, onClose, prompt, variables }) {
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 sticky bottom-0 pb-safe">
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 sticky bottom-0 pb-safe space-y-3">
                     <button
                         onClick={handleCopy}
-                        className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-violet-200 transition-all active:scale-[0.98]"
+                        className="w-full flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-sky-200 dark:shadow-none transition-all active:scale-[0.98]"
                     >
                         <Copy className="w-5 h-5" />
                         <span>Copia Prompt Compilato</span>
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <X className="w-4 h-4" />
+                        <span>ANNULLA</span>
                     </button>
                 </div>
             </div>

@@ -7,7 +7,7 @@ export const COLOR_PALETTE = [
     { id: 'teal', name: 'Teal', bg: 'bg-teal-100', text: 'text-teal-800', border: 'border-teal-200' },
     { id: 'blue', name: 'Blu', bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200' },
     { id: 'indigo', name: 'Indaco', bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-200' },
-    { id: 'purple', name: 'Viola', bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200' },
+    { id: 'sky', name: 'Azzurro', bg: 'bg-sky-100', text: 'text-sky-800', border: 'border-sky-200' },
     { id: 'pink', name: 'Rosa', bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-200' }
 ];
 

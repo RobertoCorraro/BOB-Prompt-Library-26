@@ -68,7 +68,7 @@ export default function PromptViewModal({
                 <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/20">
                     <div className="flex-1 min-w-0 mr-4">
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded">
                                 {prompt.category}
                             </span>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
@@ -93,7 +93,7 @@ export default function PromptViewModal({
                             <label className="text-xs font-bold uppercase tracking-widest text-slate-400">Contenuto del Prompt</label>
                             <button
                                 onClick={handleCopy}
-                                className="text-violet-600 dark:text-violet-400 text-xs font-bold flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                                className="text-sky-600 dark:text-sky-400 text-xs font-bold flex items-center gap-1.5 hover:opacity-80 transition-opacity"
                             >
                                 <Copy className="w-3.5 h-3.5" /> COPIA TESTO
                             </button>
@@ -143,8 +143,8 @@ export default function PromptViewModal({
                     <button
                         onClick={handleCopy}
                         className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 font-bold py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 ${copied
-                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
                             }`}
                     >
                         {copied ? <Check className="w-4.5 h-4.5" /> : <Copy className="w-4.5 h-4.5" />}
@@ -153,7 +153,7 @@ export default function PromptViewModal({
 
                     <button
                         onClick={() => { onClose(); onCompile(prompt); }}
-                        className="flex-1 min-w-[140px] bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 active:scale-95"
+                        className="flex-1 min-w-[140px] bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 active:scale-95"
                     >
                         <Zap className="w-4.5 h-4.5 fill-current" />
                         <span>Usa Prompt</span>
@@ -164,8 +164,8 @@ export default function PromptViewModal({
                         <button
                             onClick={handleToggleFavorite}
                             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all active:scale-95 ${prompt.is_favorite
-                                    ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-500'
-                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-500'
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                 }`}
                         >
                             <Star className={`w-4 h-4 ${prompt.is_favorite ? 'fill-current' : ''}`} />
@@ -198,6 +198,15 @@ export default function PromptViewModal({
                             <span>Elimina</span>
                         </button>
                     </div>
+
+                    {/* Bottom Close Button for Mobile Accessibility */}
+                    <button
+                        onClick={onClose}
+                        className="w-full mt-2 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <X className="w-4 h-4" />
+                        <span>CHIUDI</span>
+                    </button>
                 </div>
             </div>
         </div>
