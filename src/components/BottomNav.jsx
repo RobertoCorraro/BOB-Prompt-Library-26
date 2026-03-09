@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Search, Heart, User, Plus } from 'lucide-react';
+import { SlidersHorizontal, Search, Heart, User, Plus } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
 
 export default function BottomNav({
@@ -13,7 +13,7 @@ export default function BottomNav({
     onLogout
 }) {
     const navItems = [
-        { id: 'home', icon: Home, label: 'Home' },
+        { id: 'filters', icon: SlidersHorizontal, label: 'Filtri' },
         { id: 'search', icon: Search, label: 'Cerca' },
         { id: 'favorites', icon: Heart, label: 'Salvati', isFavorite: true },
         { id: 'account', icon: User, label: isLoggedIn ? 'Esci' : 'Accedi', isAccount: true },

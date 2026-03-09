@@ -13,7 +13,7 @@ import AdminModal from './components/AdminModal';
 import SettingsModal from './components/SettingsModal';
 import VariableModal from './components/VariableModal';
 import PromptViewModal from './components/PromptViewModal';
-import SettingsSidebar from './components/SettingsSidebar';
+import FilterSidebar from './components/FilterSidebar';
 import AuthGuardModal from './components/AuthGuardModal';
 import BottomNav from './components/BottomNav';
 
@@ -96,6 +96,7 @@ export default function App() {
 
   // Settings State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsMode, setSettingsMode] = useState('categories');
   const [isAuthGuardOpen, setIsAuthGuardOpen] = useState(false);
@@ -506,7 +507,7 @@ export default function App() {
       <Header
         searchRef={searchInputRef}
         onSearch={setSearchQuery}
-        onSettings={() => setIsSidebarOpen(true)}
+        onSettings={() => setIsFilterSidebarOpen(true)}
         userEmail={session?.user?.email || (isAuthenticated ? AUTH_CONFIG.username : '')}
         showFavorites={showFavorites}
         onToggleFavorites={() => { triggerHaptic('light'); setShowFavorites(!showFavorites); }}
@@ -609,9 +610,9 @@ export default function App() {
       </button>
 
       <BottomNav
-        activeTab={activeCategory === 'Tutti' ? 'home' : 'home'}
+        activeTab={searchQuery ? 'search' : 'filters'}
         onTabChange={(tab) => {
-          if (tab === 'home') setActiveCategory('Tutti');
+          if (tab === 'filters') setIsFilterSidebarOpen(true);
           if (tab === 'search') {
             triggerHaptic('light');
             setTimeout(() => searchInputRef.current?.focus(), 100);
@@ -623,6 +624,32 @@ export default function App() {
         isLoggedIn={isLoggedIn}
         onLogin={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
+      />
+
+      <FilterSidebar
+        isOpen={isFilterSidebarOpen}
+        onClose={() => setIsFilterSidebarOpen(false)}
+        categories={[{ id: 'all', name: 'Tutti', color: { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-200' } }, ...categories]}
+        activeCategory={activeCategory}
+        onSelectCategory={(cat) => { setActiveCategory(cat); setIsFilterSidebarOpen(false); }}
+        types={types}
+        activeType={activeType}
+        onSelectType={(type) => { setActiveType(type); setIsFilterSidebarOpen(false); }}
+        tags={tags}
+        selectedTags={selectedTags}
+        onSelectTags={setSelectedTags}
+        showFavorites={showFavorites}
+        onToggleFavorites={() => setShowFavorites(!showFavorites)}
+        onResetFilters={() => {
+          setActiveCategory('Tutti');
+          setActiveType('Tutti');
+          setSelectedTags([]);
+          setShowFavorites(false);
+          setSearchQuery('');
+          setIsFilterSidebarOpen(false);
+        }}
+        isLoggedIn={isLoggedIn}
+        onOpenSettings={(mode) => { setSettingsMode(mode); setIsFilterSidebarOpen(false); setIsSettingsOpen(true); }}
       />
 
       <SettingsSidebar
