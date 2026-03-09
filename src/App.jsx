@@ -95,7 +95,6 @@ export default function App() {
   const [modalInitialData, setModalInitialData] = useState(null);
 
   // Settings State
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsMode, setSettingsMode] = useState('categories');
@@ -652,21 +651,6 @@ export default function App() {
         onOpenSettings={(mode) => { setSettingsMode(mode); setIsFilterSidebarOpen(false); setIsSettingsOpen(true); }}
       />
 
-      <SettingsSidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        onOpenSettings={(mode) => { setSettingsMode(mode); setIsSidebarOpen(false); setIsSettingsOpen(true); }}
-        onLogout={handleLogout}
-        userEmail={session?.user?.email || (isAuthenticated ? AUTH_CONFIG.username : '')}
-        types={types}
-        activeType={activeType}
-        onSelectType={setActiveType}
-        tags={tags}
-        selectedTags={selectedTags}
-        onSelectTags={setSelectedTags}
-        showFavorites={showFavorites}
-        onToggleFavorites={() => setShowFavorites(!showFavorites)}
-      />
 
       <AdminModal
         isOpen={isModalOpen}
