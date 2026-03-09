@@ -524,56 +524,75 @@ export default function App() {
         </div>
       )}
 
-      <main id="main" className="max-w-7xl mx-auto">
-        <CategoryMenu
-          categories={[{ id: 'all', name: 'Tutti', color: { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-200' } }, ...categories]}
-          activeCategory={activeCategory}
-          onSelectCategory={setActiveCategory}
-        />
+      <main id="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+        <section>
+          <CategoryMenu
+            categories={[{ id: 'all', name: 'Tutti', color: { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-200' } }, ...categories]}
+            activeCategory={activeCategory}
+            onSelectCategory={setActiveCategory}
+          />
+        </section>
 
-        <div className="px-4">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
-              {activeCategory === 'Tutti' ? 'Tutti i Prompt' : activeCategory}
-              <span className="ml-2 text-sm font-normal text-slate-400">({filteredPrompts.length})</span>
-            </h2>
-            <div className="flex items-center gap-2">
-              {/* Sort Button */}
-              <div className="relative">
+        <section className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-3">
+                {activeCategory === 'Tutti' ? 'Tutti i Prompt' : activeCategory}
+                <span className="text-sm font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
+                  {filteredPrompts.length}
+                </span>
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                {searchQuery ? `Risultati per "${searchQuery}"` : 'Esplora e usa i tuoi prompt migliori'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 self-end sm:self-auto">
+              {/* Sort Controls */}
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                 <button
                   onClick={() => {
                     const nextBy = sortBy === 'created_at' ? 'updated_at' : 'created_at';
                     setSortBy(nextBy);
                     localStorage.setItem('bob_sort_by', nextBy);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-sky-900/30 hover:text-sky-700 dark:hover:text-sky-400 transition-colors"
-                  title={sortBy === 'created_at' ? 'Ordine: Data Creazione' : 'Ordine: Data Modifica'}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all"
+                  title={sortBy === 'created_at' ? 'Ordina per Creazione' : 'Ordina per Modifica'}
                 >
                   <ArrowUpDown className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{sortBy === 'created_at' ? 'Creazione' : 'Modifica'}</span>
+                  <span className="hidden lg:inline">{sortBy === 'created_at' ? 'Creazione' : 'Modifica'}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const nextDir = sortDir === 'desc' ? 'asc' : 'desc';
+                    setSortDir(nextDir);
+                    localStorage.setItem('bob_sort_dir', nextDir);
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all border-l border-slate-200 dark:border-slate-700"
+                >
+                  {sortDir === 'desc' ? '↓ New' : '↑ Old'}
                 </button>
               </div>
-              {/* Direction Toggle */}
-              <button
-                onClick={() => {
-                  const nextDir = sortDir === 'desc' ? 'asc' : 'desc';
-                  setSortDir(nextDir);
-                  localStorage.setItem('bob_sort_dir', nextDir);
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-sky-100 dark:hover:bg-sky-900/30 hover:text-sky-700 dark:hover:text-sky-400 transition-colors"
-                title={sortDir === 'desc' ? 'Dal più recente' : 'Dal più vecchio'}
-              >
-                {sortDir === 'desc' ? '↓ Recenti' : '↑ Vecchi'}
-              </button>
+
               {/* View Mode Toggle */}
-              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400'}`}><LayoutGrid className="w-4 h-4" /></button>
-                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400'}`}><List className="w-4 h-4" /></button>
+              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                <button
+                  onClick={() => { triggerHaptic('light'); setViewMode('grid'); }}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  <LayoutGrid className="w-4.5 h-4.5" />
+                </button>
+                <button
+                  onClick={() => { triggerHaptic('light'); setViewMode('list'); }}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  <List className="w-4.5 h-4.5" />
+                </button>
               </div>
             </div>
           </div>
 
-          <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 max-w-3xl mx-auto'}`}>
+          <div className={`grid gap-5 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 max-w-4xl mx-auto'}`}>
             {filteredPrompts.map(prompt => (
               <PromptCard
                 key={prompt.id}
@@ -593,12 +612,15 @@ export default function App() {
           </div>
 
           {filteredPrompts.length === 0 && (
-            <div className="text-center py-20">
-              <div className="bg-slate-100 dark:bg-slate-800 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4"><Loader2 className="w-8 h-8 text-slate-400" /></div>
-              <h3 className="text-lg font-medium">Nessun prompt trovato</h3>
+            <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
+              <div className="bg-slate-100 dark:bg-slate-800 rounded-3xl w-24 h-24 flex items-center justify-center mb-6 border border-slate-200 dark:border-slate-700">
+                <Loader2 className="w-10 h-10 text-slate-300" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white">Nessun prompt trovato</h3>
+              <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-xs">Prova a cambiare i filtri o la query di ricerca</p>
             </div>
           )}
-        </div>
+        </section>
       </main>
 
       <button

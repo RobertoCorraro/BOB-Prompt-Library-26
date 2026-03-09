@@ -19,19 +19,20 @@
 
 **BOB Prompt Library** è uno strumento di produttività per professionisti AI. Offre sincronizzazione cloud nativa, gestione avanzata delle variabili e un'interfaccia mobile-first.
 
-### 💎 Funzionalità
+### 💎 Funzionalità Avanzate
 
-| Feature | Descrizione |
-|---|---|
-| ☁️ **Cloud Sync** | Integrazione nativa con **Supabase** (PostgreSQL) |
-| 🧩 **Variabili Dinamiche** | Rilevamento automatico `{{variabile}}` con compilatore rapido |
-| 🏷️ **Tassonomie** | Categorie, Tipi e Tag dinamici, gestiti da admin, ordinati alfabeticamente |
-| 📋 **Duplica Prompt** | Clona rapidamente qualsiasi prompt come punto di partenza |
-| 🕐 **Storico Revisioni** | Ogni modifica può essere salvata come revisione consultabile |
-| 🔀 **Ordinamento** | Ordina per data di creazione o modifica, crescente o decrescente |
-| ⭐ **Preferiti** | Filtra e segna i prompt più usati |
-| 🌙 **Dark Mode** | Tema scuro intelligente con micro-animazioni |
-| 📱 **Mobile-first** | Feedback aptico, layout responsive, ottimizzato per touch |
+| Categoria | Feature | Dettagli |
+|---|---|---|
+| ☁️ **Sincronizzazione** | **Cloud Native** | Integrazione completa con **Supabase** (PostgreSQL) e fallback mock locale. |
+| 🧩 **Ingegneria Prompt** | **Variabili Dinamiche** | Rilevamento `{{variabile}}` con compilatore interattivo e conteggio variabili nelle card. |
+| 🏷️ **Tassonomia** | **Gestione Custom** | Categorie, Tipi e Tag dinamici con colori personalizzati e ordinamento alfabetico automatico. |
+| 📋 **Gestione** | **Operazioni CRUD** | Creazione, modifica, eliminazione e **duplicazione rapida** dei prompt. |
+| 🕐 **Versioning** | **Storico Revisioni** | Ogni modifica può essere archiviata come versione storica consultabile nell'area admin. |
+| 🔀 **Discovery** | **Filtri & Search** | Ricerca full-text e filtri incrociati per categoria, tipo e tag multipli. |
+| ⭐ **Organizzazione** | **Preferiti** | Sistema di "Stelle" per accesso rapido ai prompt più importanti. |
+| 📊 **Visualizzazione** | **Dual View** | Switch dinamico tra modalità **Grid** (schede) e **List** (compatta). |
+| 📱 **UX Premium** | **Mobile-First** | Feedback aptico, layout a griglia adattiva, pulsanti extra-large e dark mode nativa. |
+| 📤 **Portabilità** | **Export JSON** | Esportazione dei prompt filtrati in formato JSON per backup o migrazione. |
 
 ---
 

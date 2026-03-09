@@ -147,26 +147,33 @@ export default function PromptCard({
                     <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/0 to-transparent dark:from-slate-800/90 dark:via-slate-800/0 pointer-events-none" />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 mt-4 text-xs text-slate-400 dark:text-slate-500 font-medium">
-                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${typeColor.bg} ${typeColor.text} ${typeColor.border} dark:bg-opacity-20 dark:border-opacity-30`}>
-                        <Type className="w-3 h-3" />
+                <div className="flex flex-wrap items-center gap-3 mt-4 text-xs font-medium">
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${typeColor.bg} ${typeColor.text} ${typeColor.border} dark:bg-opacity-20 dark:border-opacity-30`}>
+                        <Type className="w-3.5 h-3.5" />
                         <span>{prompt.type}</span>
                     </div>
+
+                    {variables.length > 0 && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 border border-sky-100 dark:border-sky-800/50">
+                            <Braces className="w-3.5 h-3.5" />
+                            <span>{variables.length} {variables.length === 1 ? 'Variabile' : 'Variabili'}</span>
+                        </div>
+                    )}
+
                     {prompt.tags && prompt.tags.length > 0 && (
-                        <div className="flex items-center gap-2 border-l border-slate-200 dark:border-slate-700 pl-3">
+                        <div className="flex items-center gap-2 border-l border-slate-200 dark:border-slate-700 pl-3 text-slate-400 dark:text-slate-500">
                             <Tag className="w-3 h-3" />
                             <div className="flex flex-wrap gap-1">
                                 {prompt.tags.map(tag => <span key={tag} className="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px]">#{tag}</span>)}
                             </div>
                         </div>
                     )}
-                    <div className="ml-auto flex items-center gap-1">
+                    <div className="ml-auto flex items-center gap-1 text-slate-400 dark:text-slate-500">
                         <Calendar className="w-3 h-3" />
                         <span title={new Date(prompt.created_at).toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}>
                             {new Date(prompt.created_at).toLocaleString('it-IT', {
                                 timeZone: 'Europe/Rome',
-                                day: '2-digit', month: '2-digit', year: 'numeric',
-                                hour: '2-digit', minute: '2-digit'
+                                day: '2-digit', month: '2-digit', year: 'numeric'
                             })}
                         </span>
                     </div>
