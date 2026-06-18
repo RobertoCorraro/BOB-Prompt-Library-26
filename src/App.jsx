@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Loader2, LayoutGrid, List, X, Braces, RefreshCw, Copy, ArrowUpDown } from 'lucide-react';
-import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { pb, isPocketBaseConfigured, normalizeTags, serializeTags } from './lib/pocketbase';
 import { AUTH_CONFIG } from './auth.config';
 import { COLOR_PALETTE, DEFAULT_COLOR } from './lib/constants';
 import { extractVariables, triggerHaptic } from './lib/utils';
@@ -17,27 +17,27 @@ import FilterSidebar from './components/FilterSidebar';
 import AuthGuardModal from './components/AuthGuardModal';
 import BottomNav from './components/BottomNav';
 
-// Mock data for when Supabase is not connected
+// Mock data for when PocketBase is not connected
 const MOCK_CATEGORIES = [
-  { id: '3', name: 'Business', color: COLOR_PALETTE[6] },      // Blue
-  { id: '5', name: 'Coding', color: COLOR_PALETTE[9] },        // Pink
-  { id: '4', name: 'Copywriting', color: COLOR_PALETTE[3] },   // Green
-  { id: '2', name: 'Marketing', color: COLOR_PALETTE[0] },     // Red
-  { id: '1', name: 'Psicologia', color: COLOR_PALETTE[8] },    // Sky Blue
+  { id: '3', name: 'Business', color: COLOR_PALETTE[6] },
+  { id: '5', name: 'Coding', color: COLOR_PALETTE[9] },
+  { id: '4', name: 'Copywriting', color: COLOR_PALETTE[3] },
+  { id: '2', name: 'Marketing', color: COLOR_PALETTE[0] },
+  { id: '1', name: 'Psicologia', color: COLOR_PALETTE[8] },
 ];
 
 const MOCK_TYPES = [
-  { id: '4', name: 'Esempio one-shot', color: COLOR_PALETTE[1] }, // Orange
-  { id: '1', name: 'Prompt parziale', color: COLOR_PALETTE[5] },  // Cyan
-  { id: '2', name: 'Prompt template', color: COLOR_PALETTE[2] },  // Amber
-  { id: '3', name: 'System Prompt', color: COLOR_PALETTE[7] },    // Indigo
+  { id: '4', name: 'Esempio one-shot', color: COLOR_PALETTE[1] },
+  { id: '1', name: 'Prompt parziale', color: COLOR_PALETTE[5] },
+  { id: '2', name: 'Prompt template', color: COLOR_PALETTE[2] },
+  { id: '3', name: 'System Prompt', color: COLOR_PALETTE[7] },
 ];
 
 const MOCK_TAGS = [
-  { id: '3', name: 'Email', color: COLOR_PALETTE[2] },         // Amber
-  { id: '4', name: 'Productivity', color: COLOR_PALETTE[6] },  // Blue
-  { id: '1', name: 'SEO', color: COLOR_PALETTE[4] },           // Emerald
-  { id: '2', name: 'Social Media', color: COLOR_PALETTE[9] },  // Pink
+  { id: '3', name: 'Email', color: COLOR_PALETTE[2] },
+  { id: '4', name: 'Productivity', color: COLOR_PALETTE[6] },
+  { id: '1', name: 'SEO', color: COLOR_PALETTE[4] },
+  { id: '2', name: 'Social Media', color: COLOR_PALETTE[9] },
 ];
 
 const MOCK_PROMPTS = [
@@ -63,8 +63,13 @@ const MOCK_PROMPTS = [
   }
 ];
 
+// Normalize a record from PocketBase: convert tags JSON string to array
+const normalizeRecord = (record) => ({
+  ...record,
+  tags: normalizeTags(record.tags),
+});
+
 export default function App() {
-  const [session, setSession] = useState(null);
   const [prompts, setPrompts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [types, setTypes] = useState([]);
@@ -87,7 +92,7 @@ export default function App() {
     return localStorage.getItem('bob_view_mode') || 'grid';
   });
   const [showFavorites, setShowFavorites] = useState(false);
-  const [sortBy, setSortBy] = useState(() => localStorage.getItem('bob_sort_by') || 'created_at');
+  const [sortBy, setSortBy] = useState(() => localStorage.getItem('bob_sort_by') || 'created');
   const [sortDir, setSortDir] = useState(() => localStorage.getItem('bob_sort_dir') || 'desc');
 
   // Modals State
@@ -100,7 +105,7 @@ export default function App() {
   const [settingsMode, setSettingsMode] = useState('categories');
   const [isAuthGuardOpen, setIsAuthGuardOpen] = useState(false);
 
-  // Revisions State (Mock)
+  // Revisions State
   const [revisions, setRevisions] = useState({});
 
   // Compilation State
@@ -132,42 +137,19 @@ export default function App() {
     localStorage.setItem('bob_view_mode', viewMode);
   }, [viewMode]);
 
-  // NOTE: We intentionally do NOT persist data to localStorage.
-  // Supabase is the single source of truth. Local admin changes persist
-  // via Supabase. Guest users work with in-memory mock data that resets on reload.
-
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (!isPocketBaseConfigured) {
       loadMockData();
       return;
     }
-
-    supabase.auth.getSession()
-      .then(({ data: { session } }) => {
-        setSession(session);
-        fetchData(); // Always fetch data
-      })
-      .catch(error => {
-        console.error('Auth check failed:', error);
-        loadMockData();
-      });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      fetchData(); // Always fetch data
-    });
-
-    return () => subscription.unsubscribe();
+    fetchData();
   }, []);
 
   // Re-fetch data whenever sort preferences change
   useEffect(() => {
-    fetchData();
+    if (isPocketBaseConfigured) fetchData();
   }, [sortBy, sortDir]);
 
-  // Loads static mock data for guests (no localStorage, in-memory only).
   const loadMockData = () => {
     setPrompts(MOCK_PROMPTS);
     setCategories(MOCK_CATEGORIES);
@@ -180,33 +162,29 @@ export default function App() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const { data: promptsData, error: promptsError } = await supabase
-        .from('prompts')
-        .select('*')
-        .order(sortBy, { ascending: sortDir === 'asc' });
 
-      if (promptsError) throw promptsError;
+      // PocketBase sort: "+field" for asc, "-field" for desc
+      const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
 
-      const { data: catData } = await supabase.from('categories').select('*').order('name');
-      const { data: typeData } = await supabase.from('types').select('*').order('name');
-      const { data: tagData } = await supabase.from('prompt_tags').select('*').order('name');
-      const { data: revData } = await supabase
-        .from('prompt_revisions')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const promptsData = await pb.collection('prompts').getFullList({ sort: sortField });
+      const catData = await pb.collection('categories').getFullList({ sort: '+name' });
+      const typeData = await pb.collection('types').getFullList({ sort: '+name' });
+      const tagData = await pb.collection('prompt_tags').getFullList({ sort: '+name' });
+      const revData = await pb.collection('prompt_revisions').getFullList({ sort: '-created' });
 
       const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
 
-      setPrompts(promptsData || []);
+      // Normalize tags (JSON string → array) for each prompt and revision
+      setPrompts((promptsData || []).map(normalizeRecord));
       setCategories(sortByName(catData?.length > 0 ? catData : MOCK_CATEGORIES));
       setTypes(sortByName(typeData?.length > 0 ? typeData : MOCK_TYPES));
       setTags(sortByName(tagData?.length > 0 ? tagData : MOCK_TAGS));
 
-      // Group revisions by prompt_id: { [prompt_id]: [...revisions] }
       if (revData) {
         const grouped = revData.reduce((acc, rev) => {
-          if (!acc[rev.prompt_id]) acc[rev.prompt_id] = [];
-          acc[rev.prompt_id].push(rev);
+          const key = rev.prompt_id;
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(normalizeRecord(rev));
           return acc;
         }, {});
         setRevisions(grouped);
@@ -236,12 +214,11 @@ export default function App() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('bob_authenticated');
-    supabase.auth.signOut();
     triggerHaptic('light');
   };
 
   const ensureAuth = (action) => {
-    if (session || isAuthenticated) {
+    if (isAuthenticated) {
       action();
     } else {
       triggerHaptic('warning');
@@ -258,8 +235,7 @@ export default function App() {
     ensureAuth(async () => {
       try {
         setIsSaving(true);
-        const { error } = await supabase.from('prompts').delete().eq('id', id);
-        if (error) throw error;
+        await pb.collection('prompts').delete(id);
         await fetchData();
         setToast({ show: true, message: 'Prompt eliminato con successo', type: 'success' });
         triggerHaptic('warning');
@@ -275,9 +251,10 @@ export default function App() {
 
   const handleSave = async (formData, saveAsRevision = false) => {
     ensureAuth(async () => {
+      // Serialize tags array → JSON string for PocketBase storage
       const newPrompt = {
         ...formData,
-        tags: formData.tags || [],
+        tags: serializeTags(formData.tags || []),
         updated_at: new Date().toISOString()
       };
 
@@ -285,25 +262,22 @@ export default function App() {
         setIsSaving(true);
         if (modalInitialData) {
           if (saveAsRevision) {
-            const { error: revError } = await supabase.from('prompt_revisions').insert([{
+            await pb.collection('prompt_revisions').create({
               prompt_id: modalInitialData.id,
               title: modalInitialData.title,
               content: modalInitialData.content,
               category: modalInitialData.category,
               type: modalInitialData.type,
-              tags: modalInitialData.tags || [],
-            }]);
-            if (revError) throw revError;
+              tags: serializeTags(modalInitialData.tags || []),
+            });
           }
-          const { error } = await supabase.from('prompts').update(newPrompt).eq('id', modalInitialData.id);
-          if (error) throw error;
+          await pb.collection('prompts').update(modalInitialData.id, newPrompt);
           setToast({ show: true, message: saveAsRevision ? 'Revisione salvata con successo!' : 'Prompt aggiornato!', type: 'success' });
         } else {
-          const { error } = await supabase.from('prompts').insert([{ ...newPrompt, is_favorite: false }]);
-          if (error) throw error;
+          await pb.collection('prompts').create({ ...newPrompt, is_favorite: false });
           setToast({ show: true, message: 'Nuovo prompt salvato!', type: 'success' });
         }
-        await fetchData(); // Always refetch from DB
+        await fetchData();
         setIsModalOpen(false);
       } catch (error) {
         console.error('Error saving:', error);
@@ -318,15 +292,15 @@ export default function App() {
     ensureAuth(async () => {
       try {
         setIsSaving(true);
-        const { id, created_at, updated_at, ...rest } = prompt;
+        const { id, created, updated, ...rest } = prompt;
         const duplicate = {
           ...rest,
           title: `Copia di ${prompt.title}`,
+          tags: serializeTags(prompt.tags || []),
           is_favorite: false,
           updated_at: new Date().toISOString()
         };
-        const { error } = await supabase.from('prompts').insert([duplicate]);
-        if (error) throw error;
+        await pb.collection('prompts').create(duplicate);
         await fetchData();
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
         triggerHaptic('success');
@@ -343,8 +317,7 @@ export default function App() {
     ensureAuth(async () => {
       try {
         setIsSaving(true);
-        const { error } = await supabase.from('prompts').update({ is_favorite: !currentStatus }).eq('id', id);
-        if (error) throw error;
+        await pb.collection('prompts').update(id, { is_favorite: !currentStatus });
         await fetchData();
         setToast({ show: true, message: !currentStatus ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti', type: 'success' });
         triggerHaptic('light');
@@ -360,7 +333,6 @@ export default function App() {
   const handleExportPrompts = () => {
     try {
       triggerHaptic('success');
-
       const exportData = {
         version: "1.0.0",
         exported_at: new Date().toISOString(),
@@ -373,7 +345,6 @@ export default function App() {
           is_favorite: p.is_favorite
         }))
       };
-
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -383,7 +354,6 @@ export default function App() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
       setToast({ show: true, message: `${filteredPrompts.length} prompt esportati!`, type: 'success' });
     } catch (error) {
       console.error('Export failed:', error);
@@ -413,18 +383,17 @@ export default function App() {
     return content;
   };
 
-  const getMetadataTable = () => {
+  const getMetadataCollection = () => {
     if (settingsMode === 'categories') return 'categories';
     if (settingsMode === 'types') return 'types';
     return 'prompt_tags';
   };
 
   const handleAddMetadata = async (item) => {
-    const table = getMetadataTable();
+    const collection = getMetadataCollection();
     try {
       setIsSaving(true);
-      const { error } = await supabase.from(table).insert([{ name: item.name, color: item.color }]);
-      if (error) throw error;
+      await pb.collection(collection).create({ name: item.name, color: item.color });
       await fetchData();
       setToast({ show: true, message: 'Elemento aggiunto', type: 'success' });
     } catch (error) {
@@ -436,11 +405,10 @@ export default function App() {
   };
 
   const handleUpdateMetadata = async (id, updatedItem) => {
-    const table = getMetadataTable();
+    const collection = getMetadataCollection();
     try {
       setIsSaving(true);
-      const { error } = await supabase.from(table).update({ name: updatedItem.name, color: updatedItem.color }).eq('id', id);
-      if (error) throw error;
+      await pb.collection(collection).update(id, { name: updatedItem.name, color: updatedItem.color });
       await fetchData();
       setToast({ show: true, message: 'Elemento aggiornato', type: 'success' });
     } catch (error) {
@@ -452,9 +420,7 @@ export default function App() {
   };
 
   const handleDeleteMetadata = async (id) => {
-    const table = getMetadataTable();
-
-    // #9: Warn if taxonomy item is still in use by prompts
+    const collection = getMetadataCollection();
     if (settingsMode === 'categories' || settingsMode === 'types') {
       const field = settingsMode === 'categories' ? 'category' : 'type';
       const itemName = (settingsMode === 'categories' ? categories : types).find(i => i.id === id)?.name;
@@ -466,11 +432,9 @@ export default function App() {
         if (!confirmed) return;
       }
     }
-
     try {
       setIsSaving(true);
-      const { error } = await supabase.from(table).delete().eq('id', id);
-      if (error) throw error;
+      await pb.collection(collection).delete(id);
       await fetchData();
       setToast({ show: true, message: 'Elemento rimosso', type: 'success' });
     } catch (error) {
@@ -491,7 +455,7 @@ export default function App() {
     return matchesCategory && matchesType && matchesTags && matchesSearch && matchesFavorites;
   });
 
-  const isLoggedIn = session || isAuthenticated;
+  const isLoggedIn = isAuthenticated;
 
   if (loading && prompts.length === 0) {
     return (
@@ -507,7 +471,7 @@ export default function App() {
         searchRef={searchInputRef}
         onSearch={setSearchQuery}
         onSettings={() => setIsFilterSidebarOpen(true)}
-        userEmail={session?.user?.email || (isAuthenticated ? AUTH_CONFIG.username : '')}
+        userEmail={isAuthenticated ? AUTH_CONFIG.username : ''}
         showFavorites={showFavorites}
         onToggleFavorites={() => { triggerHaptic('light'); setShowFavorites(!showFavorites); }}
         isLoggedIn={isLoggedIn}
@@ -516,7 +480,6 @@ export default function App() {
         onExport={handleExportPrompts}
       />
 
-      {/* Global saving indicator */}
       {isSaving && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-sky-600 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg animate-pulse">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -548,19 +511,18 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3 self-end sm:self-auto">
-              {/* Sort Controls */}
               <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                 <button
                   onClick={() => {
-                    const nextBy = sortBy === 'created_at' ? 'updated_at' : 'created_at';
+                    const nextBy = sortBy === 'created' ? 'updated' : 'created';
                     setSortBy(nextBy);
                     localStorage.setItem('bob_sort_by', nextBy);
                   }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all"
-                  title={sortBy === 'created_at' ? 'Ordina per Creazione' : 'Ordina per Modifica'}
+                  title={sortBy === 'created' ? 'Ordina per Creazione' : 'Ordina per Modifica'}
                 >
                   <ArrowUpDown className="w-3.5 h-3.5" />
-                  <span className="hidden lg:inline">{sortBy === 'created_at' ? 'Creazione' : 'Modifica'}</span>
+                  <span className="hidden lg:inline">{sortBy === 'created' ? 'Creazione' : 'Modifica'}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -574,7 +536,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* View Mode Toggle */}
               <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                 <button
                   onClick={() => { triggerHaptic('light'); setViewMode('grid'); }}
@@ -672,7 +633,6 @@ export default function App() {
         isLoggedIn={isLoggedIn}
         onOpenSettings={(mode) => { setSettingsMode(mode); setIsFilterSidebarOpen(false); setIsSettingsOpen(true); }}
       />
-
 
       <AdminModal
         isOpen={isModalOpen}
