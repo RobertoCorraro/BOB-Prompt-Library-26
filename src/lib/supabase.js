@@ -1,16 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+// BACKUP FILE - Supabase client (disabled)
+// This file is kept as reference only.
+// The app now uses PocketBase. See src/lib/pocketbase.js
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
-
-if (!isSupabaseConfigured) {
-  console.warn('Supabase environment variables are missing. App will run in local/mock mode.')
-}
-
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key'
-)
-
+export const supabase = null
+export const isSupabaseConfigured = false
