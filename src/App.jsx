@@ -38,24 +38,20 @@ const MOCK_TAGS = [
 ];
 const MOCK_PROMPTS = [
   {
-    id: '1',
-    title: 'Analisi transazionale',
+    id: '1', title: 'Analisi transazionale',
     content: "Agisci come un esperto di analisi transazionale. Analizza il seguente dialogo identificando gli stati dell'io attivati:\n\n{{dialogo}}",
     category: 'Psicologia', type: 'Prompt template', tags: ['Psicologia', 'Analisi'],
     is_favorite: true, created_at: new Date().toISOString()
   },
   {
-    id: '2',
-    title: 'Generatore di Headline',
+    id: '2', title: 'Generatore di Headline',
     content: "Scrivi 5 headline persuasive per un prodotto che aiuta a {{beneficio_principale}}. Target: {{target_audience}}.",
     category: 'Copywriting', type: 'Prompt parziale', tags: ['Copywriting', 'SEO'],
     is_favorite: false, created_at: new Date(Date.now() - 86400000).toISOString()
   }
 ];
 
-// Flag localStorage per tracciare se il setup è già stato completato almeno una volta
-const SETUP_DONE_KEY = 'bob_setup_done'
-
+const SETUP_DONE_KEY = 'bob_setup_done';
 const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
 
 export default function App() {
@@ -93,10 +89,9 @@ export default function App() {
 
   const searchInputRef = useRef(null);
 
-  // ── Bootstrap ───────────────────────────────────────────────────
+  // ─ Bootstrap ──────────────────────────────────────────────────
   useEffect(() => {
     async function bootstrap() {
-      // Modalità mock: PocketBase non configurato
       if (!isPocketBaseConfigured) {
         loadMockData();
         setAppState('ready');
@@ -105,7 +100,6 @@ export default function App() {
 
       const setupDone = localStorage.getItem(SETUP_DONE_KEY) === 'true';
 
-      // Sessione valida salvata → refresh e vai all'app
       if (pb.authStore.isValid) {
         try {
           await pb.collection('users').authRefresh();
@@ -114,24 +108,20 @@ export default function App() {
           fetchData();
           return;
         } catch {
-          // Token scaduto/invalido: pulisci e continua
           pb.authStore.clear();
           localStorage.removeItem('bob_pb_auth');
         }
       }
 
-      // Nessuna sessione: se il setup non è mai stato fatto, mostra il wizard
       if (!setupDone) {
         setAppState('setup');
         setLoading(false);
         return;
       }
 
-      // Setup già fatto, ma non loggato → mostra app in mock + modal login
       loadMockData();
       setAppState('ready');
     }
-
     bootstrap();
   }, []);
 
@@ -149,12 +139,9 @@ export default function App() {
   }, [sortBy, sortDir]);
 
   const loadMockData = () => {
-    setPrompts(MOCK_PROMPTS);
-    setCategories(MOCK_CATEGORIES);
-    setTypes(MOCK_TYPES);
-    setTags(MOCK_TAGS);
-    setRevisions({});
-    setLoading(false);
+    setPrompts(MOCK_PROMPTS); setCategories(MOCK_CATEGORIES);
+    setTypes(MOCK_TYPES); setTags(MOCK_TAGS);
+    setRevisions({}); setLoading(false);
   };
 
   const fetchData = async () => {
@@ -185,9 +172,7 @@ export default function App() {
     } catch (err) {
       console.error('Error fetching data:', err);
       setToast({ show: true, message: 'Errore nel caricamento dei dati.', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleLogin = async (email, password) => {
@@ -197,9 +182,7 @@ export default function App() {
       setIsLoginModalOpen(false);
       fetchData();
       return true;
-    } catch {
-      return false;
-    }
+    } catch { return false; }
   };
 
   const handleLogout = () => {
@@ -210,12 +193,19 @@ export default function App() {
     triggerHaptic('light');
   };
 
-  // Chiamato dal SetupWizard: marca il setup come completato
   const handleSetupComplete = () => {
     localStorage.setItem(SETUP_DONE_KEY, 'true');
     setIsAuthenticated(true);
     setAppState('ready');
     fetchData();
+  };
+
+  // Dal SetupWizard: l'utente ha già un account, passa al login
+  const handleSetupGoToLogin = () => {
+    localStorage.setItem(SETUP_DONE_KEY, 'true');
+    setAppState('ready');
+    loadMockData();
+    setIsLoginModalOpen(true);
   };
 
   const ensureAuth = (action) => {
@@ -236,9 +226,8 @@ export default function App() {
         await fetchData();
         setToast({ show: true, message: 'Prompt eliminato', type: 'success' });
         triggerHaptic('warning');
-      } catch (err) {
-        setToast({ show: true, message: 'Errore durante l\'eliminazione', type: 'error' });
-      } finally { setIsSaving(false); }
+      } catch { setToast({ show: true, message: 'Errore eliminazione', type: 'error' }); }
+      finally { setIsSaving(false); }
       setIsModalOpen(false);
     });
   };
@@ -264,9 +253,8 @@ export default function App() {
         }
         await fetchData();
         setIsModalOpen(false);
-      } catch (err) {
-        setToast({ show: true, message: 'Errore: ' + (err.message || 'salvataggio fallito'), type: 'error' });
-      } finally { setIsSaving(false); }
+      } catch (err) { setToast({ show: true, message: 'Errore: ' + (err.message || 'salvataggio fallito'), type: 'error' }); }
+      finally { setIsSaving(false); }
     });
   };
 
@@ -279,7 +267,7 @@ export default function App() {
         await fetchData();
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
         triggerHaptic('success');
-      } catch { setToast({ show: true, message: 'Errore durante la duplicazione', type: 'error' }); }
+      } catch { setToast({ show: true, message: 'Errore duplicazione', type: 'error' }); }
       finally { setIsSaving(false); }
     });
   };
@@ -368,14 +356,13 @@ export default function App() {
   }
 
   if (appState === 'setup') {
-    return <SetupWizard onSetupComplete={handleSetupComplete} />;
+    return <SetupWizard onSetupComplete={handleSetupComplete} onGoToLogin={handleSetupGoToLogin} />;
   }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200 pb-20 sm:pb-10">
       <Header
-        searchRef={searchInputRef}
-        onSearch={setSearchQuery}
+        searchRef={searchInputRef} onSearch={setSearchQuery}
         onSettings={() => setIsFilterSidebarOpen(true)}
         userEmail={isAuthenticated ? (pb.authStore.model?.email || '') : ''}
         showFavorites={showFavorites}
@@ -396,8 +383,7 @@ export default function App() {
         <section>
           <CategoryMenu
             categories={[{ id: 'all', name: 'Tutti', color: { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-200' } }, ...categories]}
-            activeCategory={activeCategory}
-            onSelectCategory={setActiveCategory}
+            activeCategory={activeCategory} onSelectCategory={setActiveCategory}
           />
         </section>
 
@@ -436,11 +422,9 @@ export default function App() {
               <PromptCard key={prompt.id} prompt={prompt} categories={categories} types={types} viewMode={viewMode}
                 onCopy={handleCopy}
                 onEdit={(p) => ensureAuth(() => { setModalInitialData(p); setIsModalOpen(true); })}
-                onToggleFavorite={handleToggleFavorite}
-                onCompile={handleOpenCompile}
+                onToggleFavorite={handleToggleFavorite} onCompile={handleOpenCompile}
                 onView={(p) => setViewModal({ isOpen: true, prompt: p })}
-                onDelete={handleDelete}
-                onDuplicate={handleDuplicate}
+                onDelete={handleDelete} onDuplicate={handleDuplicate}
               />
             ))}
           </div>
@@ -471,9 +455,7 @@ export default function App() {
         onNewPrompt={() => ensureAuth(() => { setModalInitialData(null); setIsModalOpen(true); })}
         showFavorites={showFavorites}
         onToggleFavorites={() => { triggerHaptic('light'); setShowFavorites(!showFavorites); }}
-        isLoggedIn={isAuthenticated}
-        onLogin={() => setIsLoginModalOpen(true)}
-        onLogout={handleLogout}
+        isLoggedIn={isAuthenticated} onLogin={() => setIsLoginModalOpen(true)} onLogout={handleLogout}
       />
 
       <FilterSidebar
@@ -516,9 +498,9 @@ export default function App() {
                 <div className="text-slate-200 whitespace-pre-wrap">{handleCompile()}</div>
               </div>
             </div>
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t flex gap-4">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t">
               <button onClick={() => { triggerHaptic('success'); navigator.clipboard.writeText(handleCompile()); setCompileModal({ ...compileModal, isOpen: false }); setToast({ show: true, message: 'Prompt compilato e copiato!', type: 'success' }); }}
-                className="flex-1 bg-sky-600 text-white font-bold py-3 rounded-xl">Copia & Chiudi</button>
+                className="w-full bg-sky-600 text-white font-bold py-3 rounded-xl">Copia & Chiudi</button>
             </div>
           </div>
         </div>
