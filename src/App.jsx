@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2, LayoutGrid, List, X, Braces, RefreshCw, Copy, ArrowUpDown } from 'lucide-react';
+import { Plus, Loader2, LayoutGrid, List, X, ArrowUpDown } from 'lucide-react';
 import { pb, isPocketBaseConfigured, normalizeTags, serializeTags } from './lib/pocketbase';
-import { COLOR_PALETTE, DEFAULT_COLOR } from './lib/constants';
+import { COLOR_PALETTE } from './lib/constants';
 import { extractVariables, triggerHaptic } from './lib/utils';
 import Login from './components/Login';
 import SetupWizard from './components/SetupWizard';
@@ -17,7 +17,6 @@ import FilterSidebar from './components/FilterSidebar';
 import AuthGuardModal from './components/AuthGuardModal';
 import BottomNav from './components/BottomNav';
 
-// Mock data for when PocketBase is not connected
 const MOCK_CATEGORIES = [
   { id: '3', name: 'Business', color: COLOR_PALETTE[6] },
   { id: '5', name: 'Coding', color: COLOR_PALETTE[9] },
@@ -25,48 +24,39 @@ const MOCK_CATEGORIES = [
   { id: '2', name: 'Marketing', color: COLOR_PALETTE[0] },
   { id: '1', name: 'Psicologia', color: COLOR_PALETTE[8] },
 ];
-
 const MOCK_TYPES = [
   { id: '4', name: 'Esempio one-shot', color: COLOR_PALETTE[1] },
   { id: '1', name: 'Prompt parziale', color: COLOR_PALETTE[5] },
   { id: '2', name: 'Prompt template', color: COLOR_PALETTE[2] },
   { id: '3', name: 'System Prompt', color: COLOR_PALETTE[7] },
 ];
-
 const MOCK_TAGS = [
   { id: '3', name: 'Email', color: COLOR_PALETTE[2] },
   { id: '4', name: 'Productivity', color: COLOR_PALETTE[6] },
   { id: '1', name: 'SEO', color: COLOR_PALETTE[4] },
   { id: '2', name: 'Social Media', color: COLOR_PALETTE[9] },
 ];
-
 const MOCK_PROMPTS = [
   {
     id: '1',
     title: 'Analisi transazionale',
     content: "Agisci come un esperto di analisi transazionale. Analizza il seguente dialogo identificando gli stati dell'io attivati:\n\n{{dialogo}}",
-    category: 'Psicologia',
-    type: 'Prompt template',
-    tags: ['Psicologia', 'Analisi'],
-    is_favorite: true,
-    created_at: new Date().toISOString()
+    category: 'Psicologia', type: 'Prompt template', tags: ['Psicologia', 'Analisi'],
+    is_favorite: true, created_at: new Date().toISOString()
   },
   {
     id: '2',
     title: 'Generatore di Headline',
     content: "Scrivi 5 headline persuasive per un prodotto che aiuta a {{beneficio_principale}}. Target: {{target_audience}}.",
-    category: 'Copywriting',
-    type: 'Prompt parziale',
-    tags: ['Copywriting', 'SEO'],
-    is_favorite: false,
-    created_at: new Date(Date.now() - 86400000).toISOString()
+    category: 'Copywriting', type: 'Prompt parziale', tags: ['Copywriting', 'SEO'],
+    is_favorite: false, created_at: new Date(Date.now() - 86400000).toISOString()
   }
 ];
 
-const normalizeRecord = (record) => ({
-  ...record,
-  tags: normalizeTags(record.tags),
-});
+// Flag localStorage per tracciare se il setup è già stato completato almeno una volta
+const SETUP_DONE_KEY = 'bob_setup_done'
+
+const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
 
 export default function App() {
   const [prompts, setPrompts] = useState([]);
@@ -76,12 +66,11 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Setup / Auth State
-  const [appState, setAppState] = useState('loading'); // 'loading' | 'setup' | 'ready'
+  // 'loading' | 'setup' | 'ready'
+  const [appState, setAppState] = useState('loading');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // UI State
   const [activeCategory, setActiveCategory] = useState('Tutti');
   const [activeType, setActiveType] = useState('Tutti');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -91,71 +80,65 @@ export default function App() {
   const [sortBy, setSortBy] = useState(() => localStorage.getItem('bob_sort_by') || 'created');
   const [sortDir, setSortDir] = useState(() => localStorage.getItem('bob_sort_dir') || 'desc');
 
-  // Modals State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialData, setModalInitialData] = useState(null);
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsMode, setSettingsMode] = useState('categories');
   const [isAuthGuardOpen, setIsAuthGuardOpen] = useState(false);
-
-  // Revisions State
   const [revisions, setRevisions] = useState({});
-
-  // Compilation State
   const [compileModal, setCompileModal] = useState({ isOpen: false, prompt: null, variables: [], inputs: {} });
   const [viewModal, setViewModal] = useState({ isOpen: false, prompt: null });
-
-  // Toast State
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const searchInputRef = useRef(null);
 
-  // ── Bootstrap: controlla se è il primo avvio ──────────────────────────────
+  // ── Bootstrap ───────────────────────────────────────────────────
   useEffect(() => {
     async function bootstrap() {
+      // Modalità mock: PocketBase non configurato
       if (!isPocketBaseConfigured) {
         loadMockData();
         setAppState('ready');
         return;
       }
 
-      try {
-        // Recupera la sessione salvata
-        pb.authStore.loadFromCookie(document.cookie);
-        const hasValidSession = pb.authStore.isValid;
+      const setupDone = localStorage.getItem(SETUP_DONE_KEY) === 'true';
 
-        if (hasValidSession) {
+      // Sessione valida salvata → refresh e vai all'app
+      if (pb.authStore.isValid) {
+        try {
           await pb.collection('users').authRefresh();
           setIsAuthenticated(true);
           setAppState('ready');
           fetchData();
           return;
+        } catch {
+          // Token scaduto/invalido: pulisci e continua
+          pb.authStore.clear();
+          localStorage.removeItem('bob_pb_auth');
         }
-
-        // Controlla se esistono utenti: se la lista è vuota → setup
-        const users = await pb.collection('users').getList(1, 1);
-        if (users.totalItems === 0) {
-          setAppState('setup');
-          setLoading(false);
-        } else {
-          setAppState('ready');
-          loadMockData(); // carica mock finché non si fa login
-        }
-      } catch (err) {
-        console.error('Bootstrap error:', err);
-        // In caso di errore di rete/auth, mostra l'app in modalità mock
-        loadMockData();
-        setAppState('ready');
       }
+
+      // Nessuna sessione: se il setup non è mai stato fatto, mostra il wizard
+      if (!setupDone) {
+        setAppState('setup');
+        setLoading(false);
+        return;
+      }
+
+      // Setup già fatto, ma non loggato → mostra app in mock + modal login
+      loadMockData();
+      setAppState('ready');
     }
+
     bootstrap();
   }, []);
 
   useEffect(() => {
     if (toast.show) {
-      const timer = setTimeout(() => setToast({ ...toast, show: false }), 3000);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setToast(s => ({ ...s, show: false })), 3000);
+      return () => clearTimeout(t);
     }
   }, [toast.show]);
 
@@ -178,11 +161,13 @@ export default function App() {
     try {
       setLoading(true);
       const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
-      const promptsData = await pb.collection('prompts').getFullList({ sort: sortField });
-      const catData = await pb.collection('categories').getFullList({ sort: '+name' });
-      const typeData = await pb.collection('types').getFullList({ sort: '+name' });
-      const tagData = await pb.collection('prompt_tags').getFullList({ sort: '+name' });
-      const revData = await pb.collection('prompt_revisions').getFullList({ sort: '-created' });
+      const [promptsData, catData, typeData, tagData, revData] = await Promise.all([
+        pb.collection('prompts').getFullList({ sort: sortField }),
+        pb.collection('categories').getFullList({ sort: '+name' }),
+        pb.collection('types').getFullList({ sort: '+name' }),
+        pb.collection('prompt_tags').getFullList({ sort: '+name' }),
+        pb.collection('prompt_revisions').getFullList({ sort: '-created' }),
+      ]);
       const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
       setPrompts((promptsData || []).map(normalizeRecord));
       setCategories(sortByName(catData?.length > 0 ? catData : MOCK_CATEGORIES));
@@ -196,18 +181,15 @@ export default function App() {
           return acc;
         }, {});
         setRevisions(grouped);
-      } else {
-        setRevisions({});
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (err) {
+      console.error('Error fetching data:', err);
       setToast({ show: true, message: 'Errore nel caricamento dei dati.', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  // ── Login tramite PocketBase Auth ─────────────────────────────────────────
   const handleLogin = async (email, password) => {
     try {
       await pb.collection('users').authWithPassword(email, password);
@@ -222,25 +204,23 @@ export default function App() {
 
   const handleLogout = () => {
     pb.authStore.clear();
+    localStorage.removeItem('bob_pb_auth');
     setIsAuthenticated(false);
     loadMockData();
     triggerHaptic('light');
   };
 
-  // Chiamato dal SetupWizard dopo la registrazione riuscita
+  // Chiamato dal SetupWizard: marca il setup come completato
   const handleSetupComplete = () => {
+    localStorage.setItem(SETUP_DONE_KEY, 'true');
     setIsAuthenticated(true);
     setAppState('ready');
     fetchData();
   };
 
   const ensureAuth = (action) => {
-    if (isAuthenticated) {
-      action();
-    } else {
-      triggerHaptic('warning');
-      setIsAuthGuardOpen(true);
-    }
+    if (isAuthenticated) { action(); }
+    else { triggerHaptic('warning'); setIsAuthGuardOpen(true); }
   };
 
   const handleCopy = (title) => {
@@ -254,14 +234,11 @@ export default function App() {
         setIsSaving(true);
         await pb.collection('prompts').delete(id);
         await fetchData();
-        setToast({ show: true, message: 'Prompt eliminato con successo', type: 'success' });
+        setToast({ show: true, message: 'Prompt eliminato', type: 'success' });
         triggerHaptic('warning');
-      } catch (error) {
-        console.error('Error deleting:', error);
+      } catch (err) {
         setToast({ show: true, message: 'Errore durante l\'eliminazione', type: 'error' });
-      } finally {
-        setIsSaving(false);
-      }
+      } finally { setIsSaving(false); }
       setIsModalOpen(false);
     });
   };
@@ -274,12 +251,9 @@ export default function App() {
         if (modalInitialData) {
           if (saveAsRevision) {
             await pb.collection('prompt_revisions').create({
-              prompt_id: modalInitialData.id,
-              title: modalInitialData.title,
-              content: modalInitialData.content,
-              category: modalInitialData.category,
-              type: modalInitialData.type,
-              tags: serializeTags(modalInitialData.tags || []),
+              prompt_id: modalInitialData.id, title: modalInitialData.title,
+              content: modalInitialData.content, category: modalInitialData.category,
+              type: modalInitialData.type, tags: serializeTags(modalInitialData.tags || []),
             });
           }
           await pb.collection('prompts').update(modalInitialData.id, newPrompt);
@@ -290,12 +264,9 @@ export default function App() {
         }
         await fetchData();
         setIsModalOpen(false);
-      } catch (error) {
-        console.error('Error saving:', error);
-        setToast({ show: true, message: 'Errore: ' + (error.message || 'salvataggio fallito'), type: 'error' });
-      } finally {
-        setIsSaving(false);
-      }
+      } catch (err) {
+        setToast({ show: true, message: 'Errore: ' + (err.message || 'salvataggio fallito'), type: 'error' });
+      } finally { setIsSaving(false); }
     });
   };
 
@@ -304,17 +275,12 @@ export default function App() {
       try {
         setIsSaving(true);
         const { id, created, updated, ...rest } = prompt;
-        const duplicate = { ...rest, title: `Copia di ${prompt.title}`, tags: serializeTags(prompt.tags || []), is_favorite: false, updated_at: new Date().toISOString() };
-        await pb.collection('prompts').create(duplicate);
+        await pb.collection('prompts').create({ ...rest, title: `Copia di ${prompt.title}`, tags: serializeTags(prompt.tags || []), is_favorite: false, updated_at: new Date().toISOString() });
         await fetchData();
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
         triggerHaptic('success');
-      } catch (error) {
-        console.error('Error duplicating:', error);
-        setToast({ show: true, message: 'Errore durante la duplicazione', type: 'error' });
-      } finally {
-        setIsSaving(false);
-      }
+      } catch { setToast({ show: true, message: 'Errore durante la duplicazione', type: 'error' }); }
+      finally { setIsSaving(false); }
     });
   };
 
@@ -326,123 +292,73 @@ export default function App() {
         await fetchData();
         setToast({ show: true, message: !currentStatus ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti', type: 'success' });
         triggerHaptic('light');
-      } catch (error) {
-        console.error('Error toggling favorite:', error);
-        setToast({ show: true, message: 'Errore durante l\'operazione', type: 'error' });
-      } finally {
-        setIsSaving(false);
-      }
+      } catch { setToast({ show: true, message: 'Errore', type: 'error' }); }
+      finally { setIsSaving(false); }
     });
   };
 
   const handleExportPrompts = () => {
     try {
       triggerHaptic('success');
-      const exportData = {
-        version: "1.0.0",
-        exported_at: new Date().toISOString(),
-        prompts: filteredPrompts.map(p => ({ title: p.title, content: p.content, category: p.category, type: p.type, tags: p.tags, is_favorite: p.is_favorite }))
-      };
+      const exportData = { version: "1.0.0", exported_at: new Date().toISOString(), prompts: filteredPrompts.map(p => ({ title: p.title, content: p.content, category: p.category, type: p.type, tags: p.tags, is_favorite: p.is_favorite })) };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `bob-prompts-export-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
       setToast({ show: true, message: `${filteredPrompts.length} prompt esportati!`, type: 'success' });
-    } catch (error) {
-      console.error('Export failed:', error);
-      setToast({ show: true, message: 'Errore durante l\'esportazione', type: 'error' });
-    }
+    } catch { setToast({ show: true, message: 'Errore esportazione', type: 'error' }); }
   };
 
   const handleOpenCompile = (prompt) => {
     const vars = extractVariables(prompt.content);
-    if (vars.length > 0) {
-      triggerHaptic('light');
-      setCompileModal({ isOpen: true, prompt, variables: vars, inputs: {} });
-    } else {
-      navigator.clipboard.writeText(prompt.content);
-      triggerHaptic('success');
-      handleCopy(prompt.title);
-    }
+    if (vars.length > 0) { triggerHaptic('light'); setCompileModal({ isOpen: true, prompt, variables: vars, inputs: {} }); }
+    else { navigator.clipboard.writeText(prompt.content); triggerHaptic('success'); handleCopy(prompt.title); }
   };
 
   const handleCompile = () => {
     if (!compileModal.prompt) return '';
     let content = compileModal.prompt.content;
     Object.entries(compileModal.inputs).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      content = content.replace(regex, value || `{{${key}}}`);
+      content = content.replace(new RegExp(`{{${key}}}`, 'g'), value || `{{${key}}}`);
     });
     return content;
   };
 
-  const getMetadataCollection = () => {
-    if (settingsMode === 'categories') return 'categories';
-    if (settingsMode === 'types') return 'types';
-    return 'prompt_tags';
-  };
+  const getMetadataCollection = () => settingsMode === 'categories' ? 'categories' : settingsMode === 'types' ? 'types' : 'prompt_tags';
 
   const handleAddMetadata = async (item) => {
-    const collection = getMetadataCollection();
-    try {
-      setIsSaving(true);
-      await pb.collection(collection).create({ name: item.name, color: item.color });
-      await fetchData();
-      setToast({ show: true, message: 'Elemento aggiunto', type: 'success' });
-    } catch (error) {
-      setToast({ show: true, message: 'Errore: ' + (error.message || 'aggiunta fallita'), type: 'error' });
-    } finally { setIsSaving(false); }
+    try { setIsSaving(true); await pb.collection(getMetadataCollection()).create({ name: item.name, color: item.color }); await fetchData(); setToast({ show: true, message: 'Aggiunto', type: 'success' }); }
+    catch (err) { setToast({ show: true, message: 'Errore: ' + err.message, type: 'error' }); }
+    finally { setIsSaving(false); }
   };
-
-  const handleUpdateMetadata = async (id, updatedItem) => {
-    const collection = getMetadataCollection();
-    try {
-      setIsSaving(true);
-      await pb.collection(collection).update(id, { name: updatedItem.name, color: updatedItem.color });
-      await fetchData();
-      setToast({ show: true, message: 'Elemento aggiornato', type: 'success' });
-    } catch (error) {
-      setToast({ show: true, message: 'Errore: ' + (error.message || 'aggiornamento fallito'), type: 'error' });
-    } finally { setIsSaving(false); }
+  const handleUpdateMetadata = async (id, item) => {
+    try { setIsSaving(true); await pb.collection(getMetadataCollection()).update(id, { name: item.name, color: item.color }); await fetchData(); setToast({ show: true, message: 'Aggiornato', type: 'success' }); }
+    catch (err) { setToast({ show: true, message: 'Errore: ' + err.message, type: 'error' }); }
+    finally { setIsSaving(false); }
   };
-
   const handleDeleteMetadata = async (id) => {
-    const collection = getMetadataCollection();
-    if (settingsMode === 'categories' || settingsMode === 'types') {
-      const field = settingsMode === 'categories' ? 'category' : 'type';
-      const itemName = (settingsMode === 'categories' ? categories : types).find(i => i.id === id)?.name;
+    const field = settingsMode === 'categories' ? 'category' : 'type';
+    const itemName = (settingsMode === 'categories' ? categories : types).find(i => i.id === id)?.name;
+    if (settingsMode !== 'tags') {
       const usedBy = prompts.filter(p => p[field] === itemName);
-      if (usedBy.length > 0) {
-        const confirmed = window.confirm(`"${itemName}" è ancora usata da ${usedBy.length} prompt. Eliminandola, quei prompt perderanno questa ${settingsMode === 'categories' ? 'categoria' : 'tipo'}. Continuare?`);
-        if (!confirmed) return;
-      }
+      if (usedBy.length > 0 && !window.confirm(`"${itemName}" è usata da ${usedBy.length} prompt. Continuare?`)) return;
     }
-    try {
-      setIsSaving(true);
-      await pb.collection(collection).delete(id);
-      await fetchData();
-      setToast({ show: true, message: 'Elemento rimosso', type: 'success' });
-    } catch (error) {
-      setToast({ show: true, message: 'Errore: ' + (error.message || 'rimozione fallita'), type: 'error' });
-    } finally { setIsSaving(false); }
+    try { setIsSaving(true); await pb.collection(getMetadataCollection()).delete(id); await fetchData(); setToast({ show: true, message: 'Rimosso', type: 'success' }); }
+    catch (err) { setToast({ show: true, message: 'Errore: ' + err.message, type: 'error' }); }
+    finally { setIsSaving(false); }
   };
 
   const filteredPrompts = prompts.filter(prompt => {
     const matchesCategory = activeCategory === 'Tutti' || prompt.category === activeCategory;
     const matchesType = activeType === 'Tutti' || prompt.type === activeType;
     const matchesTags = selectedTags.length === 0 || selectedTags.every(tag => (prompt.tags || []).includes(tag));
-    const matchesSearch = (prompt.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (prompt.content?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    const matchesSearch = (prompt.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || (prompt.content?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     const matchesFavorites = !showFavorites || prompt.is_favorite;
     return matchesCategory && matchesType && matchesTags && matchesSearch && matchesFavorites;
   });
 
-  // ── Loading iniziale ──────────────────────────────────────────────────────
   if (appState === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -451,19 +367,17 @@ export default function App() {
     );
   }
 
-  // ── Setup Wizard (primo avvio) ────────────────────────────────────────────
   if (appState === 'setup') {
     return <SetupWizard onSetupComplete={handleSetupComplete} />;
   }
 
-  // ── App principale ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200 pb-20 sm:pb-10">
       <Header
         searchRef={searchInputRef}
         onSearch={setSearchQuery}
         onSettings={() => setIsFilterSidebarOpen(true)}
-        userEmail={isAuthenticated ? pb.authStore.model?.email || '' : ''}
+        userEmail={isAuthenticated ? (pb.authStore.model?.email || '') : ''}
         showFavorites={showFavorites}
         onToggleFavorites={() => { triggerHaptic('light'); setShowFavorites(!showFavorites); }}
         isLoggedIn={isAuthenticated}
@@ -474,8 +388,7 @@ export default function App() {
 
       {isSaving && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-sky-600 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg animate-pulse">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span>Salvataggio...</span>
+          <Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Salvataggio...</span>
         </div>
       )}
 
@@ -493,52 +406,34 @@ export default function App() {
             <div>
               <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-3">
                 {activeCategory === 'Tutti' ? 'Tutti i Prompt' : activeCategory}
-                <span className="text-sm font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
-                  {filteredPrompts.length}
-                </span>
+                <span className="text-sm font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">{filteredPrompts.length}</span>
               </h2>
               <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
                 {searchQuery ? `Risultati per "${searchQuery}"` : 'Esplora e usa i tuoi prompt migliori'}
               </p>
             </div>
-
             <div className="flex items-center gap-3 self-end sm:self-auto">
               <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                <button
-                  onClick={() => { const nextBy = sortBy === 'created' ? 'updated' : 'created'; setSortBy(nextBy); localStorage.setItem('bob_sort_by', nextBy); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all"
-                  title={sortBy === 'created' ? 'Ordina per Creazione' : 'Ordina per Modifica'}
-                >
+                <button onClick={() => { const n = sortBy === 'created' ? 'updated' : 'created'; setSortBy(n); localStorage.setItem('bob_sort_by', n); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all">
                   <ArrowUpDown className="w-3.5 h-3.5" />
                   <span className="hidden lg:inline">{sortBy === 'created' ? 'Creazione' : 'Modifica'}</span>
                 </button>
-                <button
-                  onClick={() => { const nextDir = sortDir === 'desc' ? 'asc' : 'desc'; setSortDir(nextDir); localStorage.setItem('bob_sort_dir', nextDir); }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all border-l border-slate-200 dark:border-slate-700"
-                >
+                <button onClick={() => { const n = sortDir === 'desc' ? 'asc' : 'desc'; setSortDir(n); localStorage.setItem('bob_sort_dir', n); }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all border-l border-slate-200 dark:border-slate-700">
                   {sortDir === 'desc' ? '↓ New' : '↑ Old'}
                 </button>
               </div>
-
               <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                <button onClick={() => { triggerHaptic('light'); setViewMode('grid'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <LayoutGrid className="w-4.5 h-4.5" />
-                </button>
-                <button onClick={() => { triggerHaptic('light'); setViewMode('list'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <List className="w-4.5 h-4.5" />
-                </button>
+                <button onClick={() => { triggerHaptic('light'); setViewMode('grid'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid className="w-4.5 h-4.5" /></button>
+                <button onClick={() => { triggerHaptic('light'); setViewMode('list'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><List className="w-4.5 h-4.5" /></button>
               </div>
             </div>
           </div>
 
           <div className={`grid gap-5 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 max-w-4xl mx-auto'}`}>
             {filteredPrompts.map(prompt => (
-              <PromptCard
-                key={prompt.id}
-                prompt={prompt}
-                categories={categories}
-                types={types}
-                viewMode={viewMode}
+              <PromptCard key={prompt.id} prompt={prompt} categories={categories} types={types} viewMode={viewMode}
                 onCopy={handleCopy}
                 onEdit={(p) => ensureAuth(() => { setModalInitialData(p); setIsModalOpen(true); })}
                 onToggleFavorite={handleToggleFavorite}
@@ -562,10 +457,8 @@ export default function App() {
         </section>
       </main>
 
-      <button
-        onClick={() => ensureAuth(() => { setModalInitialData(null); setIsModalOpen(true); })}
-        className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95"
-      >
+      <button onClick={() => ensureAuth(() => { setModalInitialData(null); setIsModalOpen(true); })}
+        className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95">
         <Plus className="w-7 h-7" />
       </button>
 
@@ -584,45 +477,24 @@ export default function App() {
       />
 
       <FilterSidebar
-        isOpen={isFilterSidebarOpen}
-        onClose={() => setIsFilterSidebarOpen(false)}
+        isOpen={isFilterSidebarOpen} onClose={() => setIsFilterSidebarOpen(false)}
         categories={[{ id: 'all', name: 'Tutti', color: { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-200' } }, ...categories]}
-        activeCategory={activeCategory}
-        onSelectCategory={(cat) => { setActiveCategory(cat); setIsFilterSidebarOpen(false); }}
-        types={types}
-        activeType={activeType}
-        onSelectType={(type) => { setActiveType(type); setIsFilterSidebarOpen(false); }}
-        tags={tags}
-        selectedTags={selectedTags}
-        onSelectTags={setSelectedTags}
-        showFavorites={showFavorites}
-        onToggleFavorites={() => setShowFavorites(!showFavorites)}
+        activeCategory={activeCategory} onSelectCategory={(cat) => { setActiveCategory(cat); setIsFilterSidebarOpen(false); }}
+        types={types} activeType={activeType} onSelectType={(type) => { setActiveType(type); setIsFilterSidebarOpen(false); }}
+        tags={tags} selectedTags={selectedTags} onSelectTags={setSelectedTags}
+        showFavorites={showFavorites} onToggleFavorites={() => setShowFavorites(!showFavorites)}
         onResetFilters={() => { setActiveCategory('Tutti'); setActiveType('Tutti'); setSelectedTags([]); setShowFavorites(false); setSearchQuery(''); setIsFilterSidebarOpen(false); }}
         isLoggedIn={isAuthenticated}
         onOpenSettings={(mode) => { setSettingsMode(mode); setIsFilterSidebarOpen(false); setIsSettingsOpen(true); }}
       />
 
-      <AdminModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        onDelete={handleDelete}
-        initialData={modalInitialData}
-        categories={categories.map(c => c.name)}
-        types={types.map(t => t.name)}
-        promptTags={tags.map(t => t.name)}
-        revisions={modalInitialData ? (revisions[modalInitialData.id] || []) : []}
-      />
+      <AdminModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} onDelete={handleDelete}
+        initialData={modalInitialData} categories={categories.map(c => c.name)} types={types.map(t => t.name)}
+        promptTags={tags.map(t => t.name)} revisions={modalInitialData ? (revisions[modalInitialData.id] || []) : []} />
 
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        title={settingsMode}
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title={settingsMode}
         items={settingsMode === 'categories' ? categories : settingsMode === 'types' ? types : tags}
-        onAddItem={handleAddMetadata}
-        onUpdateItem={handleUpdateMetadata}
-        onDeleteItem={handleDeleteMetadata}
-      />
+        onAddItem={handleAddMetadata} onUpdateItem={handleUpdateMetadata} onDeleteItem={handleDeleteMetadata} />
 
       {compileModal.isOpen && (
         <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -645,12 +517,8 @@ export default function App() {
               </div>
             </div>
             <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t flex gap-4">
-              <button
-                onClick={() => { triggerHaptic('success'); navigator.clipboard.writeText(handleCompile()); setCompileModal({ ...compileModal, isOpen: false }); setToast({ show: true, message: 'Prompt compilato e copiato!', type: 'success' }); }}
-                className="flex-1 bg-sky-600 text-white font-bold py-3 rounded-xl"
-              >
-                Copia & Chiudi
-              </button>
+              <button onClick={() => { triggerHaptic('success'); navigator.clipboard.writeText(handleCompile()); setCompileModal({ ...compileModal, isOpen: false }); setToast({ show: true, message: 'Prompt compilato e copiato!', type: 'success' }); }}
+                className="flex-1 bg-sky-600 text-white font-bold py-3 rounded-xl">Copia & Chiudi</button>
             </div>
           </div>
         </div>
@@ -662,27 +530,14 @@ export default function App() {
         </div>
       )}
 
-      {isLoginModalOpen && (
-        <Login onLogin={handleLogin} onClose={() => setIsLoginModalOpen(false)} />
-      )}
+      {isLoginModalOpen && <Login onLogin={handleLogin} onClose={() => setIsLoginModalOpen(false)} />}
 
-      <PromptViewModal
-        isOpen={viewModal.isOpen}
-        onClose={() => setViewModal({ isOpen: false, prompt: null })}
-        prompt={viewModal.prompt}
-        onCopy={handleCopy}
-        onCompile={handleOpenCompile}
+      <PromptViewModal isOpen={viewModal.isOpen} onClose={() => setViewModal({ isOpen: false, prompt: null })}
+        prompt={viewModal.prompt} onCopy={handleCopy} onCompile={handleOpenCompile}
         onEdit={(p) => ensureAuth(() => { setModalInitialData(p); setIsModalOpen(true); })}
-        onDelete={handleDelete}
-        onDuplicate={handleDuplicate}
-        onToggleFavorite={handleToggleFavorite}
-      />
+        onDelete={handleDelete} onDuplicate={handleDuplicate} onToggleFavorite={handleToggleFavorite} />
 
-      <AuthGuardModal
-        isOpen={isAuthGuardOpen}
-        onClose={() => setIsAuthGuardOpen(false)}
-        onLogin={() => setIsLoginModalOpen(true)}
-      />
+      <AuthGuardModal isOpen={isAuthGuardOpen} onClose={() => setIsAuthGuardOpen(false)} onLogin={() => setIsLoginModalOpen(true)} />
     </div>
   );
 }
