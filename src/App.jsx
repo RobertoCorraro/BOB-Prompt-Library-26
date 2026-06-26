@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Loader2, LayoutGrid, List, X, Braces, RefreshCw, Copy, ArrowUpDown } from 'lucide-react';
 import { pb, isPocketBaseConfigured, normalizeTags, serializeTags } from './lib/pocketbase';
-import { AUTH_CONFIG } from './auth.config';
 import { COLOR_PALETTE, DEFAULT_COLOR } from './lib/constants';
 import { extractVariables, triggerHaptic } from './lib/utils';
 import Login from './components/Login';
+import SetupWizard from './components/SetupWizard';
 import Header from './components/Header';
 import CategoryMenu from './components/CategoryMenu';
 import FilterBar from './components/FilterBar';
@@ -63,7 +63,6 @@ const MOCK_PROMPTS = [
   }
 ];
 
-// Normalize a record from PocketBase: convert tags JSON string to array
 const normalizeRecord = (record) => ({
   ...record,
   tags: normalizeTags(record.tags),
@@ -77,10 +76,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return sessionStorage.getItem('bob_authenticated') === 'true';
-  });
+  // Setup / Auth State
+  const [appState, setAppState] = useState('loading'); // 'loading' | 'setup' | 'ready'
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // UI State
@@ -88,9 +86,7 @@ export default function App() {
   const [activeType, setActiveType] = useState('Tutti');
   const [selectedTags, setSelectedTags] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState(() => {
-    return localStorage.getItem('bob_view_mode') || 'grid';
-  });
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('bob_view_mode') || 'grid');
   const [showFavorites, setShowFavorites] = useState(false);
   const [sortBy, setSortBy] = useState(() => localStorage.getItem('bob_sort_by') || 'created');
   const [sortDir, setSortDir] = useState(() => localStorage.getItem('bob_sort_dir') || 'desc');
@@ -98,8 +94,6 @@ export default function App() {
   // Modals State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialData, setModalInitialData] = useState(null);
-
-  // Settings State
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsMode, setSettingsMode] = useState('categories');
@@ -109,22 +103,54 @@ export default function App() {
   const [revisions, setRevisions] = useState({});
 
   // Compilation State
-  const [compileModal, setCompileModal] = useState({
-    isOpen: false,
-    prompt: null,
-    variables: [],
-    inputs: {}
-  });
-
-  const [viewModal, setViewModal] = useState({
-    isOpen: false,
-    prompt: null
-  });
+  const [compileModal, setCompileModal] = useState({ isOpen: false, prompt: null, variables: [], inputs: {} });
+  const [viewModal, setViewModal] = useState({ isOpen: false, prompt: null });
 
   // Toast State
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const searchInputRef = useRef(null);
+
+  // ── Bootstrap: controlla se è il primo avvio ──────────────────────────────
+  useEffect(() => {
+    async function bootstrap() {
+      if (!isPocketBaseConfigured) {
+        loadMockData();
+        setAppState('ready');
+        return;
+      }
+
+      try {
+        // Recupera la sessione salvata
+        pb.authStore.loadFromCookie(document.cookie);
+        const hasValidSession = pb.authStore.isValid;
+
+        if (hasValidSession) {
+          await pb.collection('users').authRefresh();
+          setIsAuthenticated(true);
+          setAppState('ready');
+          fetchData();
+          return;
+        }
+
+        // Controlla se esistono utenti: se la lista è vuota → setup
+        const users = await pb.collection('users').getList(1, 1);
+        if (users.totalItems === 0) {
+          setAppState('setup');
+          setLoading(false);
+        } else {
+          setAppState('ready');
+          loadMockData(); // carica mock finché non si fa login
+        }
+      } catch (err) {
+        console.error('Bootstrap error:', err);
+        // In caso di errore di rete/auth, mostra l'app in modalità mock
+        loadMockData();
+        setAppState('ready');
+      }
+    }
+    bootstrap();
+  }, []);
 
   useEffect(() => {
     if (toast.show) {
@@ -133,21 +159,10 @@ export default function App() {
     }
   }, [toast.show]);
 
-  useEffect(() => {
-    localStorage.setItem('bob_view_mode', viewMode);
-  }, [viewMode]);
+  useEffect(() => { localStorage.setItem('bob_view_mode', viewMode); }, [viewMode]);
 
   useEffect(() => {
-    if (!isPocketBaseConfigured) {
-      loadMockData();
-      return;
-    }
-    fetchData();
-  }, []);
-
-  // Re-fetch data whenever sort preferences change
-  useEffect(() => {
-    if (isPocketBaseConfigured) fetchData();
+    if (isPocketBaseConfigured && isAuthenticated) fetchData();
   }, [sortBy, sortDir]);
 
   const loadMockData = () => {
@@ -162,24 +177,17 @@ export default function App() {
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      // PocketBase sort: "+field" for asc, "-field" for desc
       const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
-
       const promptsData = await pb.collection('prompts').getFullList({ sort: sortField });
       const catData = await pb.collection('categories').getFullList({ sort: '+name' });
       const typeData = await pb.collection('types').getFullList({ sort: '+name' });
       const tagData = await pb.collection('prompt_tags').getFullList({ sort: '+name' });
       const revData = await pb.collection('prompt_revisions').getFullList({ sort: '-created' });
-
       const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
-
-      // Normalize tags (JSON string → array) for each prompt and revision
       setPrompts((promptsData || []).map(normalizeRecord));
       setCategories(sortByName(catData?.length > 0 ? catData : MOCK_CATEGORIES));
       setTypes(sortByName(typeData?.length > 0 ? typeData : MOCK_TYPES));
       setTags(sortByName(tagData?.length > 0 ? tagData : MOCK_TAGS));
-
       if (revData) {
         const grouped = revData.reduce((acc, rev) => {
           const key = rev.prompt_id;
@@ -191,7 +199,6 @@ export default function App() {
       } else {
         setRevisions({});
       }
-
     } catch (error) {
       console.error('Error fetching data:', error);
       setToast({ show: true, message: 'Errore nel caricamento dei dati.', type: 'error' });
@@ -200,21 +207,31 @@ export default function App() {
     }
   };
 
-  const handleLogin = (username, password) => {
-    if (username === AUTH_CONFIG.username && password === AUTH_CONFIG.password) {
+  // ── Login tramite PocketBase Auth ─────────────────────────────────────────
+  const handleLogin = async (email, password) => {
+    try {
+      await pb.collection('users').authWithPassword(email, password);
       setIsAuthenticated(true);
-      sessionStorage.setItem('bob_authenticated', 'true');
       setIsLoginModalOpen(false);
       fetchData();
       return true;
+    } catch {
+      return false;
     }
-    return false;
   };
 
   const handleLogout = () => {
+    pb.authStore.clear();
     setIsAuthenticated(false);
-    sessionStorage.removeItem('bob_authenticated');
+    loadMockData();
     triggerHaptic('light');
+  };
+
+  // Chiamato dal SetupWizard dopo la registrazione riuscita
+  const handleSetupComplete = () => {
+    setIsAuthenticated(true);
+    setAppState('ready');
+    fetchData();
   };
 
   const ensureAuth = (action) => {
@@ -251,13 +268,7 @@ export default function App() {
 
   const handleSave = async (formData, saveAsRevision = false) => {
     ensureAuth(async () => {
-      // Serialize tags array → JSON string for PocketBase storage
-      const newPrompt = {
-        ...formData,
-        tags: serializeTags(formData.tags || []),
-        updated_at: new Date().toISOString()
-      };
-
+      const newPrompt = { ...formData, tags: serializeTags(formData.tags || []), updated_at: new Date().toISOString() };
       try {
         setIsSaving(true);
         if (modalInitialData) {
@@ -272,7 +283,7 @@ export default function App() {
             });
           }
           await pb.collection('prompts').update(modalInitialData.id, newPrompt);
-          setToast({ show: true, message: saveAsRevision ? 'Revisione salvata con successo!' : 'Prompt aggiornato!', type: 'success' });
+          setToast({ show: true, message: saveAsRevision ? 'Revisione salvata!' : 'Prompt aggiornato!', type: 'success' });
         } else {
           await pb.collection('prompts').create({ ...newPrompt, is_favorite: false });
           setToast({ show: true, message: 'Nuovo prompt salvato!', type: 'success' });
@@ -293,13 +304,7 @@ export default function App() {
       try {
         setIsSaving(true);
         const { id, created, updated, ...rest } = prompt;
-        const duplicate = {
-          ...rest,
-          title: `Copia di ${prompt.title}`,
-          tags: serializeTags(prompt.tags || []),
-          is_favorite: false,
-          updated_at: new Date().toISOString()
-        };
+        const duplicate = { ...rest, title: `Copia di ${prompt.title}`, tags: serializeTags(prompt.tags || []), is_favorite: false, updated_at: new Date().toISOString() };
         await pb.collection('prompts').create(duplicate);
         await fetchData();
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
@@ -336,14 +341,7 @@ export default function App() {
       const exportData = {
         version: "1.0.0",
         exported_at: new Date().toISOString(),
-        prompts: filteredPrompts.map(p => ({
-          title: p.title,
-          content: p.content,
-          category: p.category,
-          type: p.type,
-          tags: p.tags,
-          is_favorite: p.is_favorite
-        }))
+        prompts: filteredPrompts.map(p => ({ title: p.title, content: p.content, category: p.category, type: p.type, tags: p.tags, is_favorite: p.is_favorite }))
       };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -397,11 +395,8 @@ export default function App() {
       await fetchData();
       setToast({ show: true, message: 'Elemento aggiunto', type: 'success' });
     } catch (error) {
-      console.error('Error adding metadata:', error);
       setToast({ show: true, message: 'Errore: ' + (error.message || 'aggiunta fallita'), type: 'error' });
-    } finally {
-      setIsSaving(false);
-    }
+    } finally { setIsSaving(false); }
   };
 
   const handleUpdateMetadata = async (id, updatedItem) => {
@@ -412,11 +407,8 @@ export default function App() {
       await fetchData();
       setToast({ show: true, message: 'Elemento aggiornato', type: 'success' });
     } catch (error) {
-      console.error('Error updating metadata:', error);
       setToast({ show: true, message: 'Errore: ' + (error.message || 'aggiornamento fallito'), type: 'error' });
-    } finally {
-      setIsSaving(false);
-    }
+    } finally { setIsSaving(false); }
   };
 
   const handleDeleteMetadata = async (id) => {
@@ -426,9 +418,7 @@ export default function App() {
       const itemName = (settingsMode === 'categories' ? categories : types).find(i => i.id === id)?.name;
       const usedBy = prompts.filter(p => p[field] === itemName);
       if (usedBy.length > 0) {
-        const confirmed = window.confirm(
-          `"${itemName}" è ancora usata da ${usedBy.length} prompt. Eliminandola, quei prompt perderanno questa ${settingsMode === 'categories' ? 'categoria' : 'tipo'}. Continuare?`
-        );
+        const confirmed = window.confirm(`"${itemName}" è ancora usata da ${usedBy.length} prompt. Eliminandola, quei prompt perderanno questa ${settingsMode === 'categories' ? 'categoria' : 'tipo'}. Continuare?`);
         if (!confirmed) return;
       }
     }
@@ -438,11 +428,8 @@ export default function App() {
       await fetchData();
       setToast({ show: true, message: 'Elemento rimosso', type: 'success' });
     } catch (error) {
-      console.error('Error deleting metadata:', error);
       setToast({ show: true, message: 'Errore: ' + (error.message || 'rimozione fallita'), type: 'error' });
-    } finally {
-      setIsSaving(false);
-    }
+    } finally { setIsSaving(false); }
   };
 
   const filteredPrompts = prompts.filter(prompt => {
@@ -455,9 +442,8 @@ export default function App() {
     return matchesCategory && matchesType && matchesTags && matchesSearch && matchesFavorites;
   });
 
-  const isLoggedIn = isAuthenticated;
-
-  if (loading && prompts.length === 0) {
+  // ── Loading iniziale ──────────────────────────────────────────────────────
+  if (appState === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
         <Loader2 className="w-8 h-8 animate-spin text-sky-600" />
@@ -465,16 +451,22 @@ export default function App() {
     );
   }
 
+  // ── Setup Wizard (primo avvio) ────────────────────────────────────────────
+  if (appState === 'setup') {
+    return <SetupWizard onSetupComplete={handleSetupComplete} />;
+  }
+
+  // ── App principale ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200 pb-20 sm:pb-10">
       <Header
         searchRef={searchInputRef}
         onSearch={setSearchQuery}
         onSettings={() => setIsFilterSidebarOpen(true)}
-        userEmail={isAuthenticated ? AUTH_CONFIG.username : ''}
+        userEmail={isAuthenticated ? pb.authStore.model?.email || '' : ''}
         showFavorites={showFavorites}
         onToggleFavorites={() => { triggerHaptic('light'); setShowFavorites(!showFavorites); }}
-        isLoggedIn={isLoggedIn}
+        isLoggedIn={isAuthenticated}
         onLogin={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
         onExport={handleExportPrompts}
@@ -513,11 +505,7 @@ export default function App() {
             <div className="flex items-center gap-3 self-end sm:self-auto">
               <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
                 <button
-                  onClick={() => {
-                    const nextBy = sortBy === 'created' ? 'updated' : 'created';
-                    setSortBy(nextBy);
-                    localStorage.setItem('bob_sort_by', nextBy);
-                  }}
+                  onClick={() => { const nextBy = sortBy === 'created' ? 'updated' : 'created'; setSortBy(nextBy); localStorage.setItem('bob_sort_by', nextBy); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all"
                   title={sortBy === 'created' ? 'Ordina per Creazione' : 'Ordina per Modifica'}
                 >
@@ -525,11 +513,7 @@ export default function App() {
                   <span className="hidden lg:inline">{sortBy === 'created' ? 'Creazione' : 'Modifica'}</span>
                 </button>
                 <button
-                  onClick={() => {
-                    const nextDir = sortDir === 'desc' ? 'asc' : 'desc';
-                    setSortDir(nextDir);
-                    localStorage.setItem('bob_sort_dir', nextDir);
-                  }}
+                  onClick={() => { const nextDir = sortDir === 'desc' ? 'asc' : 'desc'; setSortDir(nextDir); localStorage.setItem('bob_sort_dir', nextDir); }}
                   className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all border-l border-slate-200 dark:border-slate-700"
                 >
                   {sortDir === 'desc' ? '↓ New' : '↑ Old'}
@@ -537,16 +521,10 @@ export default function App() {
               </div>
 
               <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                <button
-                  onClick={() => { triggerHaptic('light'); setViewMode('grid'); }}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                >
+                <button onClick={() => { triggerHaptic('light'); setViewMode('grid'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
                   <LayoutGrid className="w-4.5 h-4.5" />
                 </button>
-                <button
-                  onClick={() => { triggerHaptic('light'); setViewMode('list'); }}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                >
+                <button onClick={() => { triggerHaptic('light'); setViewMode('list'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
                   <List className="w-4.5 h-4.5" />
                 </button>
               </div>
@@ -595,15 +573,12 @@ export default function App() {
         activeTab={searchQuery ? 'search' : 'filters'}
         onTabChange={(tab) => {
           if (tab === 'filters') setIsFilterSidebarOpen(true);
-          if (tab === 'search') {
-            triggerHaptic('light');
-            setTimeout(() => searchInputRef.current?.focus(), 100);
-          }
+          if (tab === 'search') { triggerHaptic('light'); setTimeout(() => searchInputRef.current?.focus(), 100); }
         }}
         onNewPrompt={() => ensureAuth(() => { setModalInitialData(null); setIsModalOpen(true); })}
         showFavorites={showFavorites}
         onToggleFavorites={() => { triggerHaptic('light'); setShowFavorites(!showFavorites); }}
-        isLoggedIn={isLoggedIn}
+        isLoggedIn={isAuthenticated}
         onLogin={() => setIsLoginModalOpen(true)}
         onLogout={handleLogout}
       />
@@ -622,15 +597,8 @@ export default function App() {
         onSelectTags={setSelectedTags}
         showFavorites={showFavorites}
         onToggleFavorites={() => setShowFavorites(!showFavorites)}
-        onResetFilters={() => {
-          setActiveCategory('Tutti');
-          setActiveType('Tutti');
-          setSelectedTags([]);
-          setShowFavorites(false);
-          setSearchQuery('');
-          setIsFilterSidebarOpen(false);
-        }}
-        isLoggedIn={isLoggedIn}
+        onResetFilters={() => { setActiveCategory('Tutti'); setActiveType('Tutti'); setSelectedTags([]); setShowFavorites(false); setSearchQuery(''); setIsFilterSidebarOpen(false); }}
+        isLoggedIn={isAuthenticated}
         onOpenSettings={(mode) => { setSettingsMode(mode); setIsFilterSidebarOpen(false); setIsSettingsOpen(true); }}
       />
 
@@ -667,11 +635,8 @@ export default function App() {
               {compileModal.variables.map(v => (
                 <div key={v} className="space-y-1">
                   <label className="text-sm font-bold">{v}</label>
-                  <input
-                    type="text"
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2"
-                    onChange={(e) => setCompileModal({ ...compileModal, inputs: { ...compileModal.inputs, [v]: e.target.value } })}
-                  />
+                  <input type="text" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2"
+                    onChange={(e) => setCompileModal({ ...compileModal, inputs: { ...compileModal.inputs, [v]: e.target.value } })} />
                 </div>
               ))}
               <div className="bg-slate-900 rounded-xl p-4 mt-6">
