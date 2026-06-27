@@ -20,11 +20,9 @@ import BottomNav from './components/BottomNav';
 const SETUP_DONE_KEY = 'bob_setup_done';
 const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
 
-// ─ Formatta un errore PocketBase in modo leggibile ───────────────
 function formatPbError(err) {
   if (!err) return 'Errore sconosciuto';
   const status = err.status ? `[HTTP ${err.status}] ` : '';
-  // Errori di validation PocketBase (es. campo mancante)
   if (err.data && typeof err.data === 'object') {
     const fields = Object.entries(err.data)
       .map(([k, v]) => `${k}: ${v?.message || JSON.stringify(v)}`)
@@ -41,12 +39,9 @@ export default function App() {
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-
-  // 'loading' | 'not_configured' | 'setup' | 'ready'
   const [appState, setAppState] = useState('loading');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
   const [activeCategory, setActiveCategory] = useState('Tutti');
   const [activeType, setActiveType] = useState('Tutti');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -55,7 +50,6 @@ export default function App() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [sortBy, setSortBy] = useState(() => localStorage.getItem('bob_sort_by') || 'created');
   const [sortDir, setSortDir] = useState(() => localStorage.getItem('bob_sort_dir') || 'desc');
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialData, setModalInitialData] = useState(null);
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
@@ -66,49 +60,99 @@ export default function App() {
   const [compileModal, setCompileModal] = useState({ isOpen: false, prompt: null, variables: [], inputs: {} });
   const [viewModal, setViewModal] = useState({ isOpen: false, prompt: null });
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-
-  // Errore persistente (non sparisce automaticamente)
   const [persistentError, setPersistentError] = useState(null);
 
+  const bootstrapDone = useRef(false);
   const searchInputRef = useRef(null);
 
-  // ─ Bootstrap ──────────────────────────────────────────────────
+  // ─ fetchData: query pubbliche + revisioni isolate ────────────
+  const fetchData = async (authenticated) => {
+    const authFlag = authenticated !== undefined ? authenticated : isAuthenticated;
+    try {
+      setLoading(true);
+      setPersistentError(null);
+      const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
+
+      // Blocco 1: collection pubbliche
+      const [promptsData, catData, typeData, tagData] = await Promise.all([
+        pb.collection('prompts').getFullList({ sort: sortField }),
+        pb.collection('categories').getFullList({ sort: '+name' }),
+        pb.collection('types').getFullList({ sort: '+name' }),
+        pb.collection('prompt_tags').getFullList({ sort: '+name' }),
+      ]);
+
+      const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
+      setPrompts((promptsData || []).map(normalizeRecord));
+      setCategories(sortByName(catData || []));
+      setTypes(sortByName(typeData || []));
+      setTags(sortByName(tagData || []));
+
+      // Blocco 2: revisioni (solo se autenticato, isolate)
+      if (authFlag) {
+        try {
+          const revData = await pb.collection('prompt_revisions').getFullList({ sort: '-created' });
+          const grouped = (revData || []).reduce((acc, rev) => {
+            const key = rev.prompt_id;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(normalizeRecord(rev));
+            return acc;
+          }, {});
+          setRevisions(grouped);
+        } catch (revErr) {
+          console.warn('prompt_revisions non disponibili:', formatPbError(revErr));
+          setRevisions({});
+        }
+      } else {
+        setRevisions({});
+      }
+    } catch (err) {
+      console.error('fetchData error:', err);
+      setPersistentError(formatPbError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─ Bootstrap (eseguito una sola volta) ─────────────────────
   useEffect(() => {
+    if (bootstrapDone.current) return;
+    bootstrapDone.current = true;
+
     async function bootstrap() {
-      // REGOLA 2: se PocketBase non è configurato, blocca l'app
       if (!isPocketBaseConfigured) {
         setAppState('not_configured');
         setLoading(false);
         return;
       }
-
       const setupDone = localStorage.getItem(SETUP_DONE_KEY) === 'true';
-
       if (pb.authStore.isValid) {
         try {
           await pb.collection('users').authRefresh();
           setIsAuthenticated(true);
           setAppState('ready');
-          fetchData();
+          fetchData(true);
           return;
         } catch {
           pb.authStore.clear();
           localStorage.removeItem('bob_pb_auth');
         }
       }
-
       if (!setupDone) {
         setAppState('setup');
         setLoading(false);
         return;
       }
-
-      // REGOLA 1: utente non loggato ma PocketBase configurato → carica dati pubblici
       setAppState('ready');
-      fetchData();
+      fetchData(false);
     }
     bootstrap();
   }, []);
+
+  // ─ Re-fetch al cambio sort (solo se app è ready) ────────────
+  useEffect(() => {
+    if (appState !== 'ready' || !isPocketBaseConfigured) return;
+    fetchData(isAuthenticated);
+  }, [sortBy, sortDir]);
 
   useEffect(() => {
     if (toast.show) {
@@ -119,53 +163,12 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem('bob_view_mode', viewMode); }, [viewMode]);
 
-  useEffect(() => {
-    if (isPocketBaseConfigured) fetchData();
-  }, [sortBy, sortDir]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setPersistentError(null);
-      const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
-      const [promptsData, catData, typeData, tagData, revData] = await Promise.all([
-        pb.collection('prompts').getFullList({ sort: sortField }),
-        pb.collection('categories').getFullList({ sort: '+name' }),
-        pb.collection('types').getFullList({ sort: '+name' }),
-        pb.collection('prompt_tags').getFullList({ sort: '+name' }),
-        // Le revisioni potrebbero richiedere auth — gestiamo separatamente
-        isAuthenticated
-          ? pb.collection('prompt_revisions').getFullList({ sort: '-created' })
-          : Promise.resolve([]),
-      ]);
-      const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
-      setPrompts((promptsData || []).map(normalizeRecord));
-      setCategories(sortByName(catData || []));
-      setTypes(sortByName(typeData || []));
-      setTags(sortByName(tagData || []));
-      if (revData) {
-        const grouped = revData.reduce((acc, rev) => {
-          const key = rev.prompt_id;
-          if (!acc[key]) acc[key] = [];
-          acc[key].push(normalizeRecord(rev));
-          return acc;
-        }, {});
-        setRevisions(grouped);
-      }
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      const msg = formatPbError(err);
-      // REGOLA 3: errore tecnico → toast fisso rosso
-      setPersistentError(msg);
-    } finally { setLoading(false); }
-  };
-
   const handleLogin = async (email, password) => {
     try {
       await pb.collection('users').authWithPassword(email, password);
       setIsAuthenticated(true);
       setIsLoginModalOpen(false);
-      fetchData();
+      fetchData(true);
       return true;
     } catch { return false; }
   };
@@ -174,8 +177,7 @@ export default function App() {
     pb.authStore.clear();
     localStorage.removeItem('bob_pb_auth');
     setIsAuthenticated(false);
-    // Dopo logout ricarica i dati pubblici
-    fetchData();
+    fetchData(false);
     triggerHaptic('light');
   };
 
@@ -183,13 +185,13 @@ export default function App() {
     localStorage.setItem(SETUP_DONE_KEY, 'true');
     setIsAuthenticated(true);
     setAppState('ready');
-    fetchData();
+    fetchData(true);
   };
 
   const handleSetupGoToLogin = () => {
     localStorage.setItem(SETUP_DONE_KEY, 'true');
     setAppState('ready');
-    fetchData();
+    fetchData(false);
     setIsLoginModalOpen(true);
   };
 
@@ -208,7 +210,7 @@ export default function App() {
       try {
         setIsSaving(true);
         await pb.collection('prompts').delete(id);
-        await fetchData();
+        await fetchData(isAuthenticated);
         setToast({ show: true, message: 'Prompt eliminato', type: 'success' });
         triggerHaptic('warning');
       } catch (err) { setToast({ show: true, message: 'Errore eliminazione: ' + formatPbError(err), type: 'error' }); }
@@ -236,7 +238,7 @@ export default function App() {
           await pb.collection('prompts').create({ ...newPrompt, is_favorite: false });
           setToast({ show: true, message: 'Nuovo prompt salvato!', type: 'success' });
         }
-        await fetchData();
+        await fetchData(isAuthenticated);
         setIsModalOpen(false);
       } catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
       finally { setIsSaving(false); }
@@ -249,7 +251,7 @@ export default function App() {
         setIsSaving(true);
         const { id, created, updated, ...rest } = prompt;
         await pb.collection('prompts').create({ ...rest, title: `Copia di ${prompt.title}`, tags: serializeTags(prompt.tags || []), is_favorite: false, updated_at: new Date().toISOString() });
-        await fetchData();
+        await fetchData(isAuthenticated);
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
         triggerHaptic('success');
       } catch (err) { setToast({ show: true, message: 'Errore duplicazione: ' + formatPbError(err), type: 'error' }); }
@@ -262,7 +264,7 @@ export default function App() {
       try {
         setIsSaving(true);
         await pb.collection('prompts').update(id, { is_favorite: !currentStatus });
-        await fetchData();
+        await fetchData(isAuthenticated);
         setToast({ show: true, message: !currentStatus ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti', type: 'success' });
         triggerHaptic('light');
       } catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
@@ -273,7 +275,7 @@ export default function App() {
   const handleExportPrompts = () => {
     try {
       triggerHaptic('success');
-      const exportData = { version: "1.0.0", exported_at: new Date().toISOString(), prompts: filteredPrompts.map(p => ({ title: p.title, content: p.content, category: p.category, type: p.type, tags: p.tags, is_favorite: p.is_favorite })) };
+      const exportData = { version: "1.1.1", exported_at: new Date().toISOString(), prompts: filteredPrompts.map(p => ({ title: p.title, content: p.content, category: p.category, type: p.type, tags: p.tags, is_favorite: p.is_favorite })) };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -302,12 +304,12 @@ export default function App() {
   const getMetadataCollection = () => settingsMode === 'categories' ? 'categories' : settingsMode === 'types' ? 'types' : 'prompt_tags';
 
   const handleAddMetadata = async (item) => {
-    try { setIsSaving(true); await pb.collection(getMetadataCollection()).create({ name: item.name, color: item.color }); await fetchData(); setToast({ show: true, message: 'Aggiunto', type: 'success' }); }
+    try { setIsSaving(true); await pb.collection(getMetadataCollection()).create({ name: item.name, color: item.color }); await fetchData(isAuthenticated); setToast({ show: true, message: 'Aggiunto', type: 'success' }); }
     catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
     finally { setIsSaving(false); }
   };
   const handleUpdateMetadata = async (id, item) => {
-    try { setIsSaving(true); await pb.collection(getMetadataCollection()).update(id, { name: item.name, color: item.color }); await fetchData(); setToast({ show: true, message: 'Aggiornato', type: 'success' }); }
+    try { setIsSaving(true); await pb.collection(getMetadataCollection()).update(id, { name: item.name, color: item.color }); await fetchData(isAuthenticated); setToast({ show: true, message: 'Aggiornato', type: 'success' }); }
     catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
     finally { setIsSaving(false); }
   };
@@ -318,7 +320,7 @@ export default function App() {
       const usedBy = prompts.filter(p => p[field] === itemName);
       if (usedBy.length > 0 && !window.confirm(`"${itemName}" è usata da ${usedBy.length} prompt. Continuare?`)) return;
     }
-    try { setIsSaving(true); await pb.collection(getMetadataCollection()).delete(id); await fetchData(); setToast({ show: true, message: 'Rimosso', type: 'success' }); }
+    try { setIsSaving(true); await pb.collection(getMetadataCollection()).delete(id); await fetchData(isAuthenticated); setToast({ show: true, message: 'Rimosso', type: 'success' }); }
     catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
     finally { setIsSaving(false); }
   };
@@ -332,7 +334,6 @@ export default function App() {
     return matchesCategory && matchesType && matchesTags && matchesSearch && matchesFavorites;
   });
 
-  // ─ Schermata: PocketBase non configurato ─────────────────────
   if (appState === 'not_configured') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900 px-6">
@@ -349,7 +350,6 @@ export default function App() {
     );
   }
 
-  // ─ Schermata: loading iniziale ───────────────────────────────
   if (appState === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -382,7 +382,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ─ TOAST FISSO ERRORE TECNICO (regola 3) ─────────────── */}
       {persistentError && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[80] w-[calc(100%-2rem)] max-w-lg
           bg-red-600 text-white rounded-2xl shadow-2xl px-4 py-3 flex items-start gap-3 border border-red-400">
@@ -391,11 +390,7 @@ export default function App() {
             <p className="text-xs font-bold uppercase tracking-wide text-red-200 mb-0.5">Errore di caricamento dati</p>
             <p className="text-sm font-medium break-words leading-snug">{persistentError}</p>
           </div>
-          <button
-            onClick={() => setPersistentError(null)}
-            className="shrink-0 text-red-200 hover:text-white transition-colors mt-0.5"
-            aria-label="Chiudi errore"
-          >
+          <button onClick={() => setPersistentError(null)} className="shrink-0 text-red-200 hover:text-white transition-colors mt-0.5" aria-label="Chiudi errore">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -463,7 +458,6 @@ export default function App() {
         </section>
       </main>
 
-      {/* FAB nuovo prompt — solo se autenticato */}
       {isAuthenticated && (
         <button onClick={() => { setModalInitialData(null); setIsModalOpen(true); }}
           className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95">
