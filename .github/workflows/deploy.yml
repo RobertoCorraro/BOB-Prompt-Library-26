@@ -1,56 +1,50 @@
-name: Deploy to GitHub Pages
+name: Deploy to liste.frasi.info
 
 on:
   push:
-    branches: ['main']
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: 'pages'
-  cancel-in-progress: true
+    branches:
+      - main
+  workflow_dispatch: # avvio manuale dal tab Actions
 
 jobs:
-  build:
+  build-and-deploy:
+    name: Build & Deploy
     runs-on: ubuntu-latest
+
     steps:
+      # 1 — Checkout
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      # 2 — Node.js 20 LTS
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
+      # 3 — Installa dipendenze
       - name: Install dependencies
         run: npm ci
 
+      # 4 — Build Vite (inietta la URL di PocketBase e la versione build)
       - name: Build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
+        env:
+          VITE_POCKETBASE_URL: ${{ secrets.VITE_POCKETBASE_URL }}
+          VITE_APP_VERSION: ${{ github.run_number }}
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      # 5 — Deploy via rsync su SSH
+      - name: Deploy via rsync over SSH
+        uses: burnett01/rsync-deployments@7.0.1
         with:
-          path: './dist'
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          # -a preserva permessi, -v verboso, -z comprimi, -r ricorsivo
+          # --delete rimuove i file vecchi sul server
+          # --exclude preserva eventuali file locali del server (.htaccess, .env)
+          switches: -avzr --delete --exclude='.env' --exclude='.htaccess'
+          path: dist/
+          remote_path: ${{ secrets.DEPLOY_PATH }}
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
+          remote_port: ${{ secrets.DEPLOY_PORT }}
