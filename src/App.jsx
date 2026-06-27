@@ -5,6 +5,7 @@ import { COLOR_PALETTE } from './lib/constants';
 import { extractVariables, triggerHaptic } from './lib/utils';
 import Login from './components/Login';
 import SetupWizard from './components/SetupWizard';
+import WelcomeScreen from './components/WelcomeScreen';
 import Header from './components/Header';
 import CategoryMenu from './components/CategoryMenu';
 import FilterBar from './components/FilterBar';
@@ -39,9 +40,12 @@ export default function App() {
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // 'loading' | 'not_configured' | 'welcome' | 'setup' | 'ready'
   const [appState, setAppState] = useState('loading');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
   const [activeCategory, setActiveCategory] = useState('Tutti');
   const [activeType, setActiveType] = useState('Tutti');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -50,6 +54,7 @@ export default function App() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [sortBy, setSortBy] = useState(() => localStorage.getItem('bob_sort_by') || 'created');
   const [sortDir, setSortDir] = useState(() => localStorage.getItem('bob_sort_dir') || 'desc');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialData, setModalInitialData] = useState(null);
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
@@ -65,29 +70,24 @@ export default function App() {
   const bootstrapDone = useRef(false);
   const searchInputRef = useRef(null);
 
-  // ─ fetchData: query pubbliche + revisioni isolate ────────────
+  // ─ fetchData ─────────────────────────────────────────────────
   const fetchData = async (authenticated) => {
     const authFlag = authenticated !== undefined ? authenticated : isAuthenticated;
     try {
       setLoading(true);
       setPersistentError(null);
       const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
-
-      // Blocco 1: collection pubbliche
       const [promptsData, catData, typeData, tagData] = await Promise.all([
         pb.collection('prompts').getFullList({ sort: sortField }),
         pb.collection('categories').getFullList({ sort: '+name' }),
         pb.collection('types').getFullList({ sort: '+name' }),
         pb.collection('prompt_tags').getFullList({ sort: '+name' }),
       ]);
-
       const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
       setPrompts((promptsData || []).map(normalizeRecord));
       setCategories(sortByName(catData || []));
       setTypes(sortByName(typeData || []));
       setTags(sortByName(tagData || []));
-
-      // Blocco 2: revisioni (solo se autenticato, isolate)
       if (authFlag) {
         try {
           const revData = await pb.collection('prompt_revisions').getFullList({ sort: '-created' });
@@ -113,7 +113,7 @@ export default function App() {
     }
   };
 
-  // ─ Bootstrap (eseguito una sola volta) ─────────────────────
+  // ─ Bootstrap ──────────────────────────────────────────────
   useEffect(() => {
     if (bootstrapDone.current) return;
     bootstrapDone.current = true;
@@ -124,7 +124,10 @@ export default function App() {
         setLoading(false);
         return;
       }
+
       const setupDone = localStorage.getItem(SETUP_DONE_KEY) === 'true';
+
+      // Utente con sessione valida: rinnova e vai diretto alla app
       if (pb.authStore.isValid) {
         try {
           await pb.collection('users').authRefresh();
@@ -137,18 +140,22 @@ export default function App() {
           localStorage.removeItem('bob_pb_auth');
         }
       }
+
+      // Prima volta assoluta: mostra il wizard di setup
       if (!setupDone) {
         setAppState('setup');
         setLoading(false);
         return;
       }
-      setAppState('ready');
-      fetchData(false);
+
+      // Setup già fatto ma non loggato → mostra welcome screen
+      setAppState('welcome');
+      setLoading(false);
     }
     bootstrap();
   }, []);
 
-  // ─ Re-fetch al cambio sort (solo se app è ready) ────────────
+  // Re-fetch al cambio sort (solo se ready)
   useEffect(() => {
     if (appState !== 'ready' || !isPocketBaseConfigured) return;
     fetchData(isAuthenticated);
@@ -163,11 +170,13 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem('bob_view_mode', viewMode); }, [viewMode]);
 
+  // ─ Auth handlers ────────────────────────────────────────
   const handleLogin = async (email, password) => {
     try {
       await pb.collection('users').authWithPassword(email, password);
       setIsAuthenticated(true);
       setIsLoginModalOpen(false);
+      setAppState('ready');
       fetchData(true);
       return true;
     } catch { return false; }
@@ -177,7 +186,7 @@ export default function App() {
     pb.authStore.clear();
     localStorage.removeItem('bob_pb_auth');
     setIsAuthenticated(false);
-    fetchData(false);
+    setAppState('welcome');
     triggerHaptic('light');
   };
 
@@ -190,9 +199,14 @@ export default function App() {
 
   const handleSetupGoToLogin = () => {
     localStorage.setItem(SETUP_DONE_KEY, 'true');
+    setAppState('welcome');
+    setLoading(false);
+  };
+
+  // Ospite: vai diretto alla app senza login
+  const handleContinueAsGuest = () => {
     setAppState('ready');
     fetchData(false);
-    setIsLoginModalOpen(true);
   };
 
   const ensureAuth = (action) => {
@@ -275,7 +289,7 @@ export default function App() {
   const handleExportPrompts = () => {
     try {
       triggerHaptic('success');
-      const exportData = { version: "1.1.1", exported_at: new Date().toISOString(), prompts: filteredPrompts.map(p => ({ title: p.title, content: p.content, category: p.category, type: p.type, tags: p.tags, is_favorite: p.is_favorite })) };
+      const exportData = { version: "1.2.0", exported_at: new Date().toISOString(), prompts: filteredPrompts.map(p => ({ title: p.title, content: p.content, category: p.category, type: p.type, tags: p.tags, is_favorite: p.is_favorite })) };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -334,6 +348,7 @@ export default function App() {
     return matchesCategory && matchesType && matchesTags && matchesSearch && matchesFavorites;
   });
 
+  // ─ Render stati speciali ──────────────────────────────────────
   if (appState === 'not_configured') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900 px-6">
@@ -342,7 +357,6 @@ export default function App() {
           <h1 className="text-2xl font-bold text-white mb-2">Configurazione mancante</h1>
           <p className="text-red-300 text-sm leading-relaxed mb-4">
             La variabile <code className="bg-red-900 px-1.5 py-0.5 rounded font-mono text-red-200">VITE_POCKETBASE_URL</code> non è definita.
-            L'applicazione non può avviarsi senza una connessione al database.
           </p>
           <p className="text-slate-400 text-xs">Imposta la variabile nel file <code className="font-mono">.env</code> e riavvia l'app.</p>
         </div>
@@ -352,8 +366,8 @@ export default function App() {
 
   if (appState === 'loading') {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Loader2 className="w-8 h-8 animate-spin text-sky-600" />
+      <div className="flex items-center justify-center min-h-screen bg-slate-900">
+        <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
       </div>
     );
   }
@@ -362,6 +376,25 @@ export default function App() {
     return <SetupWizard onSetupComplete={handleSetupComplete} onGoToLogin={handleSetupGoToLogin} />;
   }
 
+  if (appState === 'welcome') {
+    return (
+      <>
+        <WelcomeScreen
+          onRegister={() => setAppState('setup')}
+          onLogin={() => setIsLoginModalOpen(true)}
+          onGuest={handleContinueAsGuest}
+        />
+        {isLoginModalOpen && (
+          <Login
+            onLogin={handleLogin}
+            onClose={() => setIsLoginModalOpen(false)}
+          />
+        )}
+      </>
+    );
+  }
+
+  // ─ App principale ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200 pb-20 sm:pb-10">
       <Header
