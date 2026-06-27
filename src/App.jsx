@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2, LayoutGrid, List, X, ArrowUpDown } from 'lucide-react';
+import { Plus, Loader2, LayoutGrid, List, X, ArrowUpDown, AlertTriangle } from 'lucide-react';
 import { pb, isPocketBaseConfigured, normalizeTags, serializeTags } from './lib/pocketbase';
 import { COLOR_PALETTE } from './lib/constants';
 import { extractVariables, triggerHaptic } from './lib/utils';
@@ -17,42 +17,22 @@ import FilterSidebar from './components/FilterSidebar';
 import AuthGuardModal from './components/AuthGuardModal';
 import BottomNav from './components/BottomNav';
 
-const MOCK_CATEGORIES = [
-  { id: '3', name: 'Business', color: COLOR_PALETTE[6] },
-  { id: '5', name: 'Coding', color: COLOR_PALETTE[9] },
-  { id: '4', name: 'Copywriting', color: COLOR_PALETTE[3] },
-  { id: '2', name: 'Marketing', color: COLOR_PALETTE[0] },
-  { id: '1', name: 'Psicologia', color: COLOR_PALETTE[8] },
-];
-const MOCK_TYPES = [
-  { id: '4', name: 'Esempio one-shot', color: COLOR_PALETTE[1] },
-  { id: '1', name: 'Prompt parziale', color: COLOR_PALETTE[5] },
-  { id: '2', name: 'Prompt template', color: COLOR_PALETTE[2] },
-  { id: '3', name: 'System Prompt', color: COLOR_PALETTE[7] },
-];
-const MOCK_TAGS = [
-  { id: '3', name: 'Email', color: COLOR_PALETTE[2] },
-  { id: '4', name: 'Productivity', color: COLOR_PALETTE[6] },
-  { id: '1', name: 'SEO', color: COLOR_PALETTE[4] },
-  { id: '2', name: 'Social Media', color: COLOR_PALETTE[9] },
-];
-const MOCK_PROMPTS = [
-  {
-    id: '1', title: 'Analisi transazionale',
-    content: "Agisci come un esperto di analisi transazionale. Analizza il seguente dialogo identificando gli stati dell'io attivati:\n\n{{dialogo}}",
-    category: 'Psicologia', type: 'Prompt template', tags: ['Psicologia', 'Analisi'],
-    is_favorite: true, created_at: new Date().toISOString()
-  },
-  {
-    id: '2', title: 'Generatore di Headline',
-    content: "Scrivi 5 headline persuasive per un prodotto che aiuta a {{beneficio_principale}}. Target: {{target_audience}}.",
-    category: 'Copywriting', type: 'Prompt parziale', tags: ['Copywriting', 'SEO'],
-    is_favorite: false, created_at: new Date(Date.now() - 86400000).toISOString()
-  }
-];
-
 const SETUP_DONE_KEY = 'bob_setup_done';
 const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
+
+// ─ Formatta un errore PocketBase in modo leggibile ───────────────
+function formatPbError(err) {
+  if (!err) return 'Errore sconosciuto';
+  const status = err.status ? `[HTTP ${err.status}] ` : '';
+  // Errori di validation PocketBase (es. campo mancante)
+  if (err.data && typeof err.data === 'object') {
+    const fields = Object.entries(err.data)
+      .map(([k, v]) => `${k}: ${v?.message || JSON.stringify(v)}`)
+      .join(' | ');
+    if (fields) return `${status}${fields}`;
+  }
+  return `${status}${err.message || String(err)}`;
+}
 
 export default function App() {
   const [prompts, setPrompts] = useState([]);
@@ -62,7 +42,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 'loading' | 'setup' | 'ready'
+  // 'loading' | 'not_configured' | 'setup' | 'ready'
   const [appState, setAppState] = useState('loading');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -87,14 +67,18 @@ export default function App() {
   const [viewModal, setViewModal] = useState({ isOpen: false, prompt: null });
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+  // Errore persistente (non sparisce automaticamente)
+  const [persistentError, setPersistentError] = useState(null);
+
   const searchInputRef = useRef(null);
 
   // ─ Bootstrap ──────────────────────────────────────────────────
   useEffect(() => {
     async function bootstrap() {
+      // REGOLA 2: se PocketBase non è configurato, blocca l'app
       if (!isPocketBaseConfigured) {
-        loadMockData();
-        setAppState('ready');
+        setAppState('not_configured');
+        setLoading(false);
         return;
       }
 
@@ -119,8 +103,9 @@ export default function App() {
         return;
       }
 
-      loadMockData();
+      // REGOLA 1: utente non loggato ma PocketBase configurato → carica dati pubblici
       setAppState('ready');
+      fetchData();
     }
     bootstrap();
   }, []);
@@ -135,31 +120,29 @@ export default function App() {
   useEffect(() => { localStorage.setItem('bob_view_mode', viewMode); }, [viewMode]);
 
   useEffect(() => {
-    if (isPocketBaseConfigured && isAuthenticated) fetchData();
+    if (isPocketBaseConfigured) fetchData();
   }, [sortBy, sortDir]);
-
-  const loadMockData = () => {
-    setPrompts(MOCK_PROMPTS); setCategories(MOCK_CATEGORIES);
-    setTypes(MOCK_TYPES); setTags(MOCK_TAGS);
-    setRevisions({}); setLoading(false);
-  };
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      setPersistentError(null);
       const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
       const [promptsData, catData, typeData, tagData, revData] = await Promise.all([
         pb.collection('prompts').getFullList({ sort: sortField }),
         pb.collection('categories').getFullList({ sort: '+name' }),
         pb.collection('types').getFullList({ sort: '+name' }),
         pb.collection('prompt_tags').getFullList({ sort: '+name' }),
-        pb.collection('prompt_revisions').getFullList({ sort: '-created' }),
+        // Le revisioni potrebbero richiedere auth — gestiamo separatamente
+        isAuthenticated
+          ? pb.collection('prompt_revisions').getFullList({ sort: '-created' })
+          : Promise.resolve([]),
       ]);
       const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
       setPrompts((promptsData || []).map(normalizeRecord));
-      setCategories(sortByName(catData?.length > 0 ? catData : MOCK_CATEGORIES));
-      setTypes(sortByName(typeData?.length > 0 ? typeData : MOCK_TYPES));
-      setTags(sortByName(tagData?.length > 0 ? tagData : MOCK_TAGS));
+      setCategories(sortByName(catData || []));
+      setTypes(sortByName(typeData || []));
+      setTags(sortByName(tagData || []));
       if (revData) {
         const grouped = revData.reduce((acc, rev) => {
           const key = rev.prompt_id;
@@ -171,7 +154,9 @@ export default function App() {
       }
     } catch (err) {
       console.error('Error fetching data:', err);
-      setToast({ show: true, message: 'Errore nel caricamento dei dati.', type: 'error' });
+      const msg = formatPbError(err);
+      // REGOLA 3: errore tecnico → toast fisso rosso
+      setPersistentError(msg);
     } finally { setLoading(false); }
   };
 
@@ -189,7 +174,8 @@ export default function App() {
     pb.authStore.clear();
     localStorage.removeItem('bob_pb_auth');
     setIsAuthenticated(false);
-    loadMockData();
+    // Dopo logout ricarica i dati pubblici
+    fetchData();
     triggerHaptic('light');
   };
 
@@ -200,11 +186,10 @@ export default function App() {
     fetchData();
   };
 
-  // Dal SetupWizard: l'utente ha già un account, passa al login
   const handleSetupGoToLogin = () => {
     localStorage.setItem(SETUP_DONE_KEY, 'true');
     setAppState('ready');
-    loadMockData();
+    fetchData();
     setIsLoginModalOpen(true);
   };
 
@@ -226,7 +211,7 @@ export default function App() {
         await fetchData();
         setToast({ show: true, message: 'Prompt eliminato', type: 'success' });
         triggerHaptic('warning');
-      } catch { setToast({ show: true, message: 'Errore eliminazione', type: 'error' }); }
+      } catch (err) { setToast({ show: true, message: 'Errore eliminazione: ' + formatPbError(err), type: 'error' }); }
       finally { setIsSaving(false); }
       setIsModalOpen(false);
     });
@@ -253,7 +238,7 @@ export default function App() {
         }
         await fetchData();
         setIsModalOpen(false);
-      } catch (err) { setToast({ show: true, message: 'Errore: ' + (err.message || 'salvataggio fallito'), type: 'error' }); }
+      } catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
       finally { setIsSaving(false); }
     });
   };
@@ -267,7 +252,7 @@ export default function App() {
         await fetchData();
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
         triggerHaptic('success');
-      } catch { setToast({ show: true, message: 'Errore duplicazione', type: 'error' }); }
+      } catch (err) { setToast({ show: true, message: 'Errore duplicazione: ' + formatPbError(err), type: 'error' }); }
       finally { setIsSaving(false); }
     });
   };
@@ -280,7 +265,7 @@ export default function App() {
         await fetchData();
         setToast({ show: true, message: !currentStatus ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti', type: 'success' });
         triggerHaptic('light');
-      } catch { setToast({ show: true, message: 'Errore', type: 'error' }); }
+      } catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
       finally { setIsSaving(false); }
     });
   };
@@ -318,12 +303,12 @@ export default function App() {
 
   const handleAddMetadata = async (item) => {
     try { setIsSaving(true); await pb.collection(getMetadataCollection()).create({ name: item.name, color: item.color }); await fetchData(); setToast({ show: true, message: 'Aggiunto', type: 'success' }); }
-    catch (err) { setToast({ show: true, message: 'Errore: ' + err.message, type: 'error' }); }
+    catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
     finally { setIsSaving(false); }
   };
   const handleUpdateMetadata = async (id, item) => {
     try { setIsSaving(true); await pb.collection(getMetadataCollection()).update(id, { name: item.name, color: item.color }); await fetchData(); setToast({ show: true, message: 'Aggiornato', type: 'success' }); }
-    catch (err) { setToast({ show: true, message: 'Errore: ' + err.message, type: 'error' }); }
+    catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
     finally { setIsSaving(false); }
   };
   const handleDeleteMetadata = async (id) => {
@@ -334,7 +319,7 @@ export default function App() {
       if (usedBy.length > 0 && !window.confirm(`"${itemName}" è usata da ${usedBy.length} prompt. Continuare?`)) return;
     }
     try { setIsSaving(true); await pb.collection(getMetadataCollection()).delete(id); await fetchData(); setToast({ show: true, message: 'Rimosso', type: 'success' }); }
-    catch (err) { setToast({ show: true, message: 'Errore: ' + err.message, type: 'error' }); }
+    catch (err) { setToast({ show: true, message: 'Errore: ' + formatPbError(err), type: 'error' }); }
     finally { setIsSaving(false); }
   };
 
@@ -347,6 +332,24 @@ export default function App() {
     return matchesCategory && matchesType && matchesTags && matchesSearch && matchesFavorites;
   });
 
+  // ─ Schermata: PocketBase non configurato ─────────────────────
+  if (appState === 'not_configured') {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-900 px-6">
+        <div className="max-w-md w-full bg-red-950 border border-red-700 rounded-2xl p-8 text-center shadow-2xl">
+          <AlertTriangle className="w-14 h-14 text-red-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">Configurazione mancante</h1>
+          <p className="text-red-300 text-sm leading-relaxed mb-4">
+            La variabile <code className="bg-red-900 px-1.5 py-0.5 rounded font-mono text-red-200">VITE_POCKETBASE_URL</code> non è definita.
+            L'applicazione non può avviarsi senza una connessione al database.
+          </p>
+          <p className="text-slate-400 text-xs">Imposta la variabile nel file <code className="font-mono">.env</code> e riavvia l'app.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─ Schermata: loading iniziale ───────────────────────────────
   if (appState === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -376,6 +379,25 @@ export default function App() {
       {isSaving && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-sky-600 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg animate-pulse">
           <Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Salvataggio...</span>
+        </div>
+      )}
+
+      {/* ─ TOAST FISSO ERRORE TECNICO (regola 3) ─────────────── */}
+      {persistentError && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[80] w-[calc(100%-2rem)] max-w-lg
+          bg-red-600 text-white rounded-2xl shadow-2xl px-4 py-3 flex items-start gap-3 border border-red-400">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-200" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wide text-red-200 mb-0.5">Errore di caricamento dati</p>
+            <p className="text-sm font-medium break-words leading-snug">{persistentError}</p>
+          </div>
+          <button
+            onClick={() => setPersistentError(null)}
+            className="shrink-0 text-red-200 hover:text-white transition-colors mt-0.5"
+            aria-label="Chiudi errore"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -429,7 +451,7 @@ export default function App() {
             ))}
           </div>
 
-          {filteredPrompts.length === 0 && (
+          {filteredPrompts.length === 0 && !loading && (
             <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
               <div className="bg-slate-100 dark:bg-slate-800 rounded-3xl w-24 h-24 flex items-center justify-center mb-6 border border-slate-200 dark:border-slate-700">
                 <Loader2 className="w-10 h-10 text-slate-300" />
@@ -441,10 +463,13 @@ export default function App() {
         </section>
       </main>
 
-      <button onClick={() => ensureAuth(() => { setModalInitialData(null); setIsModalOpen(true); })}
-        className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95">
-        <Plus className="w-7 h-7" />
-      </button>
+      {/* FAB nuovo prompt — solo se autenticato */}
+      {isAuthenticated && (
+        <button onClick={() => { setModalInitialData(null); setIsModalOpen(true); }}
+          className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95">
+          <Plus className="w-7 h-7" />
+        </button>
+      )}
 
       <BottomNav
         activeTab={searchQuery ? 'search' : 'filters'}
@@ -500,7 +525,7 @@ export default function App() {
             </div>
             <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t">
               <button onClick={() => { triggerHaptic('success'); navigator.clipboard.writeText(handleCompile()); setCompileModal({ ...compileModal, isOpen: false }); setToast({ show: true, message: 'Prompt compilato e copiato!', type: 'success' }); }}
-                className="w-full bg-sky-600 text-white font-bold py-3 rounded-xl">Copia & Chiudi</button>
+                className="w-full bg-sky-600 text-white font-bold py-3 rounded-xl">Copia &amp; Chiudi</button>
             </div>
           </div>
         </div>
