@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, Settings, LogOut, Moon, Sun, Heart, Download } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
 
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || '1.1.0';
+
 export default function Header({ searchRef, onSearch, onSettings, userEmail, showFavorites, onToggleFavorites, isLoggedIn, onLogin, onLogout, onExport }) {
     const [isDark, setIsDark] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -33,9 +35,18 @@ export default function Header({ searchRef, onSearch, onSettings, userEmail, sho
                     <div className="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold text-xl">B</span>
                     </div>
-                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 hidden sm:block">
-                        Bob Prompt Manager
-                    </h1>
+                    <div className="hidden sm:flex flex-col leading-none">
+                        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400">
+                            Bob Prompt Manager
+                        </h1>
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 tracking-wide">
+                            v{APP_VERSION}
+                        </span>
+                    </div>
+                    {/* Versione compatta su mobile, accanto al logo */}
+                    <span className="sm:hidden text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                        v{APP_VERSION}
+                    </span>
                 </div>
 
                 <div className="flex-1 max-w-md relative group">
@@ -53,10 +64,11 @@ export default function Header({ searchRef, onSearch, onSettings, userEmail, sho
                     {/* Favorites Toggle */}
                     <button
                         onClick={onToggleFavorites}
-                        className={`p-1.5 sm:p-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${showFavorites
+                        className={`p-1.5 sm:p-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${
+                            showFavorites
                             ? 'text-rose-500 bg-rose-50 dark:bg-rose-900/20 shadow-sm shadow-rose-100 dark:shadow-none'
                             : 'text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-800'
-                            }`}
+                        }`}
                         title={showFavorites ? "Mostra tutti" : "Mostra solo preferiti"}
                     >
                         <Heart className={`w-5 h-5 ${showFavorites ? 'fill-current' : ''}`} />
