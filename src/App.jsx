@@ -21,6 +21,13 @@ import BottomNav from './components/BottomNav';
 const SETUP_DONE_KEY = 'bob_setup_done';
 const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
 
+// Sanifica il valore di sortBy: converte nomi Supabase-style in nomi PocketBase
+const normalizeSortBy = (value) => {
+  if (value === 'created_at') return 'created';
+  if (value === 'updated_at') return 'updated';
+  return ['created', 'updated', 'title'].includes(value) ? value : 'created';
+};
+
 function formatPbError(err) {
   if (!err) return 'Errore sconosciuto';
   const status = err.status ? `[HTTP ${err.status}] ` : '';
@@ -52,7 +59,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('bob_view_mode') || 'grid');
   const [showFavorites, setShowFavorites] = useState(false);
-  const [sortBy, setSortBy] = useState(() => localStorage.getItem('bob_sort_by') || 'created');
+  const [sortBy, setSortBy] = useState(() => normalizeSortBy(localStorage.getItem('bob_sort_by')));
   const [sortDir, setSortDir] = useState(() => localStorage.getItem('bob_sort_dir') || 'desc');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -235,7 +242,8 @@ export default function App() {
 
   const handleSave = async (formData, saveAsRevision = false) => {
     ensureAuth(async () => {
-      const newPrompt = { ...formData, tags: serializeTags(formData.tags || []), updated_at: new Date().toISOString() };
+      // Nota: updated_at rimosso — PocketBase gestisce "updated" automaticamente
+      const newPrompt = { ...formData, tags: serializeTags(formData.tags || []) };
       try {
         setIsSaving(true);
         if (modalInitialData) {
@@ -263,8 +271,9 @@ export default function App() {
     ensureAuth(async () => {
       try {
         setIsSaving(true);
+        // Nota: updated_at rimosso — PocketBase gestisce "updated" automaticamente
         const { id, created, updated, ...rest } = prompt;
-        await pb.collection('prompts').create({ ...rest, title: `Copia di ${prompt.title}`, tags: serializeTags(prompt.tags || []), is_favorite: false, updated_at: new Date().toISOString() });
+        await pb.collection('prompts').create({ ...rest, title: `Copia di ${prompt.title}`, tags: serializeTags(prompt.tags || []), is_favorite: false });
         await fetchData(isAuthenticated);
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
         triggerHaptic('success');
@@ -450,7 +459,7 @@ export default function App() {
             </div>
             <div className="flex items-center gap-3 self-end sm:self-auto">
               <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                <button onClick={() => { const n = sortBy === 'created' ? 'updated' : 'created'; setSortBy(n); localStorage.setItem('bob_sort_by', n); }}
+                <button onClick={() => { const n = sortBy === 'created' ? 'updated' : 'created'; setSortBy(n); localStorage.setItem('bob_sort_by', normalizeSortBy(n)); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all">
                   <ArrowUpDown className="w-3.5 h-3.5" />
                   <span className="hidden lg:inline">{sortBy === 'created' ? 'Creazione' : 'Modifica'}</span>
