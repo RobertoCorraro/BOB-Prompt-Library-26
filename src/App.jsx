@@ -22,13 +22,13 @@ import VersionBadge from './components/VersionBadge';
 const SETUP_DONE_KEY = 'bob_setup_done';
 const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
 
-// Nomi collection PocketBase
+// ─── Nomi collection PocketBase ──────────────────────────────────────────────
 const COLL = {
-  prompts: 'prompts',
+  prompts:    'prompts',
   categories: 'prompt_categ',
-  types: 'prompt_types',
-  tags: 'prompt_tags',
-  revisions: 'prompt_revisions',
+  types:      'prompt_types',
+  tags:       'prompt_tags',
+  revisions:  'prompt_revisions',
 };
 
 const normalizeSortBy = (value) => {
@@ -55,6 +55,24 @@ function formatPbError(err) {
   }
   return `${status}${err.message || String(err)}`;
 }
+
+// ─── Helper fetch con log completi ───────────────────────────────────────────
+const fetchCollection = async (name, opts) => {
+  console.log(`[BOB] ▶ fetch "${name}"`, opts);
+  try {
+    const result = await pb.collection(name).getFullList(opts);
+    console.log(`[BOB] ✅ "${name}" → ${result.length} record`);
+    return result;
+  } catch (e) {
+    console.error(
+      `[BOB] ❌ "${name}" HTTP ${e.status}`,
+      '| message:', e.message,
+      '| data:', JSON.stringify(e.data),
+      '| url:', pb.baseUrl + `/api/collections/${name}/records`,
+    );
+    throw e;
+  }
+};
 
 export default function App() {
   const [prompts, setPrompts] = useState([]);
@@ -98,15 +116,7 @@ export default function App() {
       setLoading(true);
       setPersistentError(null);
       const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
-
-      const fetchCollection = async (name, opts) => {
-        try {
-          return await pb.collection(name).getFullList(opts);
-        } catch (e) {
-          console.error(`❌ fetchData FAIL [${name}] HTTP ${e.status}:`, e.message, e.data);
-          throw e;
-        }
-      };
+      console.log(`[BOB] fetchData start — auth:${authFlag} sort:${sortField}`);
 
       const [promptsData, catData, typeData, tagData] = await Promise.all([
         fetchCollection(COLL.prompts,    { sort: sortField }),
@@ -120,10 +130,11 @@ export default function App() {
       setCategories(sortByName(catData || []));
       setTypes(sortByName(typeData || []));
       setTags(sortByName(tagData || []));
+      console.log(`[BOB] fetchData ✅ prompts:${promptsData.length} categ:${catData.length} types:${typeData.length} tags:${tagData.length}`);
 
       if (authFlag) {
         try {
-          const revData = await pb.collection(COLL.revisions).getFullList({ sort: '-created' });
+          const revData = await fetchCollection(COLL.revisions, { sort: '-created' });
           const grouped = (revData || []).reduce((acc, rev) => {
             const key = rev.prompt_id;
             if (!acc[key]) acc[key] = [];
@@ -132,14 +143,14 @@ export default function App() {
           }, {});
           setRevisions(grouped);
         } catch (revErr) {
-          console.warn('prompt_revisions non disponibili:', formatPbError(revErr));
+          console.warn('[BOB] prompt_revisions non disponibili:', formatPbError(revErr));
           setRevisions({});
         }
       } else {
         setRevisions({});
       }
     } catch (err) {
-      console.error('fetchData error:', err);
+      console.error('[BOB] fetchData FAIL:', formatPbError(err));
       setPersistentError(formatPbError(err));
     } finally {
       setLoading(false);
@@ -167,7 +178,7 @@ export default function App() {
           fetchData(true);
           return;
         } catch (e) {
-          console.warn('auth-refresh fallito (HTTP', e.status, ') — sessione scaduta o utente non trovato');
+          console.warn('[BOB] auth-refresh fallito (HTTP', e.status, ') — sessione scaduta o utente non trovato');
           pb.authStore.clear();
           localStorage.removeItem('bob_pb_auth');
         }
@@ -516,7 +527,6 @@ export default function App() {
         </section>
       </main>
 
-      {/* Version badge desktop */}
       <div className="hidden sm:flex justify-center pb-6">
         <VersionBadge />
       </div>
