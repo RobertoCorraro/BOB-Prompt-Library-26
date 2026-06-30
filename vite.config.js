@@ -10,4 +10,10 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
   },
+  server: {
+    allowedHosts: ['lista.frasi.info', 'localhost'],
+  },
+  preview: {
+    allowedHosts: ['lista.frasi.info', 'localhost'],
+  },
 });
