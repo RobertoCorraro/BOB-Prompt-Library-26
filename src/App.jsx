@@ -17,22 +17,22 @@ import PromptViewModal from './components/PromptViewModal';
 import FilterSidebar from './components/FilterSidebar';
 import AuthGuardModal from './components/AuthGuardModal';
 import BottomNav from './components/BottomNav';
+import VersionBadge from './components/VersionBadge';
 
 const SETUP_DONE_KEY = 'bob_setup_done';
 const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
 
-// PocketBase usa @created e @updated per i campi di sistema nei sort
+// SDK pocketbase 0.21: i campi di sistema si ordinano con 'created' e 'updated' (senza @ prefix)
 const normalizeSortBy = (value) => {
-  if (value === 'created_at' || value === 'created') return '@created';
-  if (value === 'updated_at' || value === 'updated') return '@updated';
-  if (value === '@created' || value === '@updated') return value;
-  return ['title'].includes(value) ? value : '@created';
+  if (!value) return 'created';
+  if (value === 'created_at' || value === '@created') return 'created';
+  if (value === 'updated_at' || value === '@updated') return 'updated';
+  return ['created', 'updated', 'title'].includes(value) ? value : 'created';
 };
 
-// Etichetta UI per il campo sort corrente
 const sortByLabel = (value) => {
-  if (value === '@created') return 'Creazione';
-  if (value === '@updated') return 'Modifica';
+  if (value === 'created') return 'Creazione';
+  if (value === 'updated') return 'Modifica';
   return value;
 };
 
@@ -56,7 +56,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 'loading' | 'not_configured' | 'welcome' | 'setup' | 'ready'
   const [appState, setAppState] = useState('loading');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -85,13 +84,11 @@ export default function App() {
   const bootstrapDone = useRef(false);
   const searchInputRef = useRef(null);
 
-  // ─ fetchData ─────────────────────────────────────────────────
   const fetchData = async (authenticated) => {
     const authFlag = authenticated !== undefined ? authenticated : isAuthenticated;
     try {
       setLoading(true);
       setPersistentError(null);
-      // PocketBase: campi di sistema si ordinano con @ prefix (@created, @updated)
       const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
 
       const fetchCollection = async (name, opts) => {
@@ -115,9 +112,10 @@ export default function App() {
       setCategories(sortByName(catData || []));
       setTypes(sortByName(typeData || []));
       setTags(sortByName(tagData || []));
+
       if (authFlag) {
         try {
-          const revData = await pb.collection('prompt_revisions').getFullList({ sort: '-@created' });
+          const revData = await pb.collection('prompt_revisions').getFullList({ sort: '-created' });
           const grouped = (revData || []).reduce((acc, rev) => {
             const key = rev.prompt_id;
             if (!acc[key]) acc[key] = [];
@@ -140,7 +138,6 @@ export default function App() {
     }
   };
 
-  // ─ Bootstrap ──────────────────────────────────────────────
   useEffect(() => {
     if (bootstrapDone.current) return;
     bootstrapDone.current = true;
@@ -154,7 +151,6 @@ export default function App() {
 
       const setupDone = localStorage.getItem(SETUP_DONE_KEY) === 'true';
 
-      // Utente con sessione valida: rinnova e vai diretto alla app
       if (pb.authStore.isValid) {
         try {
           await pb.collection('users').authRefresh();
@@ -166,25 +162,21 @@ export default function App() {
           console.warn('auth-refresh fallito (HTTP', e.status, ') — sessione scaduta o utente non trovato');
           pb.authStore.clear();
           localStorage.removeItem('bob_pb_auth');
-          // Non bloccare l'app: prosegui con il flusso normale
         }
       }
 
-      // Prima volta assoluta: mostra il wizard di setup
       if (!setupDone) {
         setAppState('setup');
         setLoading(false);
         return;
       }
 
-      // Setup già fatto ma non loggato → mostra welcome screen
       setAppState('welcome');
       setLoading(false);
     }
     bootstrap();
   }, []);
 
-  // Re-fetch al cambio sort (solo se ready)
   useEffect(() => {
     if (appState !== 'ready' || !isPocketBaseConfigured) return;
     fetchData(isAuthenticated);
@@ -199,7 +191,6 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem('bob_view_mode', viewMode); }, [viewMode]);
 
-  // ─ Auth handlers ────────────────────────────────────────
   const handleLogin = async (email, password) => {
     try {
       await pb.collection('users').authWithPassword(email, password);
@@ -232,7 +223,6 @@ export default function App() {
     setLoading(false);
   };
 
-  // Ospite: vai diretto alla app senza login
   const handleContinueAsGuest = () => {
     setAppState('ready');
     fetchData(false);
@@ -377,7 +367,6 @@ export default function App() {
     return matchesCategory && matchesType && matchesTags && matchesSearch && matchesFavorites;
   });
 
-  // ─ Render stati speciali ──────────────────────────────────────
   if (appState === 'not_configured') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900 px-6">
@@ -414,16 +403,12 @@ export default function App() {
           onGuest={handleContinueAsGuest}
         />
         {isLoginModalOpen && (
-          <Login
-            onLogin={handleLogin}
-            onClose={() => setIsLoginModalOpen(false)}
-          />
+          <Login onLogin={handleLogin} onClose={() => setIsLoginModalOpen(false)} />
         )}
       </>
     );
   }
 
-  // ─ App principale ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200 pb-20 sm:pb-10">
       <Header
@@ -479,7 +464,7 @@ export default function App() {
             </div>
             <div className="flex items-center gap-3 self-end sm:self-auto">
               <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                <button onClick={() => { const n = sortBy === '@created' ? '@updated' : '@created'; setSortBy(n); localStorage.setItem('bob_sort_by', n); }}
+                <button onClick={() => { const n = sortBy === 'created' ? 'updated' : 'created'; setSortBy(n); localStorage.setItem('bob_sort_by', n); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm transition-all">
                   <ArrowUpDown className="w-3.5 h-3.5" />
                   <span className="hidden lg:inline">{sortByLabel(sortBy)}</span>
@@ -519,6 +504,11 @@ export default function App() {
           )}
         </section>
       </main>
+
+      {/* Version badge desktop */}
+      <div className="hidden sm:flex justify-center pb-6">
+        <VersionBadge />
+      </div>
 
       {isAuthenticated && (
         <button onClick={() => { setModalInitialData(null); setIsModalOpen(true); }}
