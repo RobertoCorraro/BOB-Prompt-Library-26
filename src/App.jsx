@@ -22,7 +22,15 @@ import VersionBadge from './components/VersionBadge';
 const SETUP_DONE_KEY = 'bob_setup_done';
 const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
 
-// SDK pocketbase 0.21: i campi di sistema si ordinano con 'created' e 'updated' (senza @ prefix)
+// Nomi collection PocketBase
+const COLL = {
+  prompts: 'prompts',
+  categories: 'prompt_categ',
+  types: 'prompt_types',
+  tags: 'prompt_tags',
+  revisions: 'prompt_revisions',
+};
+
 const normalizeSortBy = (value) => {
   if (!value) return 'created';
   if (value === 'created_at' || value === '@created') return 'created';
@@ -101,10 +109,10 @@ export default function App() {
       };
 
       const [promptsData, catData, typeData, tagData] = await Promise.all([
-        fetchCollection('prompts', { sort: sortField }),
-        fetchCollection('categories', { sort: '+name' }),
-        fetchCollection('types', { sort: '+name' }),
-        fetchCollection('prompt_tags', { sort: '+name' }),
+        fetchCollection(COLL.prompts,    { sort: sortField }),
+        fetchCollection(COLL.categories, { sort: '+name' }),
+        fetchCollection(COLL.types,      { sort: '+name' }),
+        fetchCollection(COLL.tags,       { sort: '+name' }),
       ]);
 
       const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
@@ -115,7 +123,7 @@ export default function App() {
 
       if (authFlag) {
         try {
-          const revData = await pb.collection('prompt_revisions').getFullList({ sort: '-created' });
+          const revData = await pb.collection(COLL.revisions).getFullList({ sort: '-created' });
           const grouped = (revData || []).reduce((acc, rev) => {
             const key = rev.prompt_id;
             if (!acc[key]) acc[key] = [];
@@ -242,7 +250,7 @@ export default function App() {
     ensureAuth(async () => {
       try {
         setIsSaving(true);
-        await pb.collection('prompts').delete(id);
+        await pb.collection(COLL.prompts).delete(id);
         await fetchData(isAuthenticated);
         setToast({ show: true, message: 'Prompt eliminato', type: 'success' });
         triggerHaptic('warning');
@@ -259,16 +267,16 @@ export default function App() {
         setIsSaving(true);
         if (modalInitialData) {
           if (saveAsRevision) {
-            await pb.collection('prompt_revisions').create({
+            await pb.collection(COLL.revisions).create({
               prompt_id: modalInitialData.id, title: modalInitialData.title,
               content: modalInitialData.content, category: modalInitialData.category,
               type: modalInitialData.type, tags: serializeTags(modalInitialData.tags || []),
             });
           }
-          await pb.collection('prompts').update(modalInitialData.id, newPrompt);
+          await pb.collection(COLL.prompts).update(modalInitialData.id, newPrompt);
           setToast({ show: true, message: saveAsRevision ? 'Revisione salvata!' : 'Prompt aggiornato!', type: 'success' });
         } else {
-          await pb.collection('prompts').create({ ...newPrompt, is_favorite: false });
+          await pb.collection(COLL.prompts).create({ ...newPrompt, is_favorite: false });
           setToast({ show: true, message: 'Nuovo prompt salvato!', type: 'success' });
         }
         await fetchData(isAuthenticated);
@@ -283,7 +291,7 @@ export default function App() {
       try {
         setIsSaving(true);
         const { id, created, updated, ...rest } = prompt;
-        await pb.collection('prompts').create({ ...rest, title: `Copia di ${prompt.title}`, tags: serializeTags(prompt.tags || []), is_favorite: false });
+        await pb.collection(COLL.prompts).create({ ...rest, title: `Copia di ${prompt.title}`, tags: serializeTags(prompt.tags || []), is_favorite: false });
         await fetchData(isAuthenticated);
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
         triggerHaptic('success');
@@ -296,7 +304,7 @@ export default function App() {
     ensureAuth(async () => {
       try {
         setIsSaving(true);
-        await pb.collection('prompts').update(id, { is_favorite: !currentStatus });
+        await pb.collection(COLL.prompts).update(id, { is_favorite: !currentStatus });
         await fetchData(isAuthenticated);
         setToast({ show: true, message: !currentStatus ? 'Aggiunto ai preferiti' : 'Rimosso dai preferiti', type: 'success' });
         triggerHaptic('light');
@@ -334,7 +342,10 @@ export default function App() {
     return content;
   };
 
-  const getMetadataCollection = () => settingsMode === 'categories' ? 'categories' : settingsMode === 'types' ? 'types' : 'prompt_tags';
+  const getMetadataCollection = () =>
+    settingsMode === 'categories' ? COLL.categories :
+    settingsMode === 'types'      ? COLL.types :
+    COLL.tags;
 
   const handleAddMetadata = async (item) => {
     try { setIsSaving(true); await pb.collection(getMetadataCollection()).create({ name: item.name, color: item.color }); await fetchData(isAuthenticated); setToast({ show: true, message: 'Aggiunto', type: 'success' }); }
