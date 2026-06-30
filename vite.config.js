@@ -1,15 +1,13 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { readFileSync } from 'fs';
 
-// https://vite.dev/config/
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
+
 export default defineConfig({
   plugins: [react()],
-  base: '/',
-  preview: {
-    allowedHosts: [
-      'lista.frasi.info',
-      'frasi.info',
-      'localhost'
-    ]
-  }
-})
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+  },
+});

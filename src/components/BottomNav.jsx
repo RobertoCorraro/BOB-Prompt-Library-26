@@ -1,6 +1,7 @@
 import React from 'react';
 import { SlidersHorizontal, Search, Heart, User, Plus } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
+import VersionBadge from './VersionBadge';
 
 export default function BottomNav({
     activeTab,
@@ -31,8 +32,12 @@ export default function BottomNav({
     };
 
     return (
-        <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-            <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
+        <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+            {/* Version strip */}
+            <VersionBadge className="py-1 border-b border-slate-100 dark:border-slate-800/60" />
+
+            {/* Nav row */}
+            <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2 pb-safe">
                 {navItems.slice(0, 2).map((item) => {
                     const Icon = item.icon;
                     const isActive = activeTab === item.id && !showFavorites;
@@ -40,8 +45,9 @@ export default function BottomNav({
                         <button
                             key={item.id}
                             onClick={() => handleTabClick(item)}
-                            className={`flex flex-col items-center justify-center flex-1 gap-1 transition-colors ${isActive ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400 dark:text-slate-500'
-                                }`}
+                            className={`flex flex-col items-center justify-center flex-1 gap-1 transition-colors ${
+                                isActive ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400 dark:text-slate-500'
+                            }`}
                         >
                             <Icon className={`w-5 h-5 ${isActive ? 'fill-current opacity-20' : ''}`} />
                             <span className="text-[10px] font-bold">{item.label}</span>
@@ -69,8 +75,9 @@ export default function BottomNav({
                         <button
                             key={item.id}
                             onClick={() => handleTabClick(item)}
-                            className={`flex flex-col items-center justify-center flex-1 gap-1 transition-colors ${isActive ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400 dark:text-slate-500'
-                                }`}
+                            className={`flex flex-col items-center justify-center flex-1 gap-1 transition-colors ${
+                                isActive ? 'text-sky-600 dark:text-sky-400' : 'text-slate-400 dark:text-slate-500'
+                            }`}
                         >
                             <Icon className={`w-5 h-5 ${isActive ? 'fill-current' : (item.isFavorite && showFavorites ? 'text-rose-500 fill-rose-500' : '')}`} />
                             <span className="text-[10px] font-bold">{item.label}</span>
