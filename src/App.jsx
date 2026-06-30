@@ -84,12 +84,24 @@ export default function App() {
       setLoading(true);
       setPersistentError(null);
       const sortField = `${sortDir === 'asc' ? '+' : '-'}${sortBy}`;
+
+      // Fetch separate per isolare quale collection genera errori
+      const fetchCollection = async (name, opts) => {
+        try {
+          return await pb.collection(name).getFullList(opts);
+        } catch (e) {
+          console.error(`❌ fetchData FAIL [${name}] HTTP ${e.status}:`, e.message, e.data);
+          throw e; // rilancia per far scattare il catch esterno con il nome della collection
+        }
+      };
+
       const [promptsData, catData, typeData, tagData] = await Promise.all([
-        pb.collection('prompts').getFullList({ sort: sortField }),
-        pb.collection('categories').getFullList({ sort: '+name' }),
-        pb.collection('types').getFullList({ sort: '+name' }),
-        pb.collection('prompt_tags').getFullList({ sort: '+name' }),
+        fetchCollection('prompts', { sort: sortField }),
+        fetchCollection('categories', { sort: '+name' }),
+        fetchCollection('types', { sort: '+name' }),
+        fetchCollection('prompt_tags', { sort: '+name' }),
       ]);
+
       const sortByName = (arr) => [...(arr || [])].sort((a, b) => a.name.localeCompare(b.name, 'it'));
       setPrompts((promptsData || []).map(normalizeRecord));
       setCategories(sortByName(catData || []));
