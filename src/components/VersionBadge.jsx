@@ -1,8 +1,8 @@
 import React from 'react';
 
 /* eslint-disable no-undef */
-const VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '?';
-const BUILD_DATE = typeof __BUILD_DATE__ !== 'undefined__' ? __BUILD_DATE__ : null;
+const VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.2.2';
+const BUILD_DATE = typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__ : null;
 
 function formatDate(iso) {
   if (!iso) return null;
