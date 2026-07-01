@@ -23,23 +23,8 @@ pb.authStore.onChange((token, model) => {
   console.log('Model:', model ? `${model.email} (id: ${model.id})` : 'null')
   console.log('isValid:', pb.authStore.isValid)
   console.groupEnd()
-  localStorage.setItem('bob_pb_auth', JSON.stringify({ token, model }))
+  // Token mantenuto in memoria dal SDK durante la sessione corrente
 })
-
-// ─ Ripristina sessione al caricamento ───────────────────────────
-try {
-  const saved = localStorage.getItem('bob_pb_auth')
-  if (saved) {
-    const { token, model } = JSON.parse(saved)
-    pb.authStore.save(token, model)
-    console.log('✅ Sessione ripristinata da localStorage:', model?.email)
-  } else {
-    console.log('ℹ️ Nessuna sessione salvata in localStorage')
-  }
-} catch (e) {
-  console.warn('⚠️ Errore ripristino sessione:', e.message)
-  localStorage.removeItem('bob_pb_auth')
-}
 
 // ─ Fetch wrapper con log ─────────────────────────────────────────
 export const fetchCollection = async (collectionName, options = {}) => {
