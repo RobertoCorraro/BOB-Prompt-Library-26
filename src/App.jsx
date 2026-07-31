@@ -4,8 +4,6 @@ import { pb, isPocketBaseConfigured, normalizeTags, serializeTags } from './lib/
 import { COLOR_PALETTE } from './lib/constants';
 import { extractVariables, triggerHaptic } from './lib/utils';
 import Login from './components/Login';
-import SetupWizard from './components/SetupWizard';
-import WelcomeScreen from './components/WelcomeScreen';
 import Header from './components/Header';
 import CategoryMenu from './components/CategoryMenu';
 import FilterBar from './components/FilterBar';
@@ -19,7 +17,6 @@ import AuthGuardModal from './components/AuthGuardModal';
 import BottomNav from './components/BottomNav';
 import VersionBadge from './components/VersionBadge';
 
-const SETUP_DONE_KEY = 'bob_setup_done';
 const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
 
 // ─── Nomi collection PocketBase ──────────────────────────────────────────────
@@ -168,8 +165,6 @@ export default function App() {
         return;
       }
 
-      const setupDone = localStorage.getItem(SETUP_DONE_KEY) === 'true';
-
       if (pb.authStore.isValid) {
         try {
           await pb.collection('users').authRefresh();
@@ -184,13 +179,7 @@ export default function App() {
         }
       }
 
-      if (!setupDone) {
-        setAppState('setup');
-        setLoading(false);
-        return;
-      }
-
-      setAppState('welcome');
+      setAppState('auth');
       setLoading(false);
     }
     bootstrap();
@@ -225,21 +214,8 @@ export default function App() {
     pb.authStore.clear();
     localStorage.removeItem('bob_pb_auth');
     setIsAuthenticated(false);
-    setAppState('welcome');
+    setAppState('auth');
     triggerHaptic('light');
-  };
-
-  const handleSetupComplete = () => {
-    localStorage.setItem(SETUP_DONE_KEY, 'true');
-    setIsAuthenticated(true);
-    setAppState('ready');
-    fetchData(true);
-  };
-
-  const handleSetupGoToLogin = () => {
-    localStorage.setItem(SETUP_DONE_KEY, 'true');
-    setAppState('welcome');
-    setLoading(false);
   };
 
   const handleContinueAsGuest = () => {
@@ -412,23 +388,8 @@ export default function App() {
     );
   }
 
-  if (appState === 'setup') {
-    return <SetupWizard onSetupComplete={handleSetupComplete} onGoToLogin={handleSetupGoToLogin} />;
-  }
-
-  if (appState === 'welcome') {
-    return (
-      <>
-        <WelcomeScreen
-          onRegister={() => setAppState('setup')}
-          onLogin={() => setIsLoginModalOpen(true)}
-          onGuest={handleContinueAsGuest}
-        />
-        {isLoginModalOpen && (
-          <Login onLogin={handleLogin} onClose={() => setIsLoginModalOpen(false)} />
-        )}
-      </>
-    );
+  if (appState === 'auth') {
+    return <Login onLogin={handleLogin} onGuest={handleContinueAsGuest} />;
   }
 
   return (

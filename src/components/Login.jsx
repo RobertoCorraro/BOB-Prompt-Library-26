@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Lock, User, AlertCircle, X } from 'lucide-react';
+import { BookOpen, Lock, User, Mail, AlertCircle, CheckCircle, Eye, X } from 'lucide-react';
 import { pb, isPocketBaseConfigured } from '../lib/pocketbase';
 
-export default function Login({ onLogin, onClose }) {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+export default function Login({ onLogin, onClose, onGuest }) {
+    const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset'
+    const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '' });
     const [error, setError] = useState('');
+    const [isEmailDuplicate, setIsEmailDuplicate] = useState(false);
+    const [resetSent, setResetSent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState('checking');
 
@@ -34,22 +36,96 @@ export default function Login({ onLogin, onClose }) {
         checkConnection();
     }, []);
 
-    const handleSubmit = async (e) => {
+    const switchMode = (next) => {
+        setMode(next);
+        setError('');
+        setIsEmailDuplicate(false);
+        setResetSent(false);
+        setForm((f) => ({ ...f, password: '', passwordConfirm: '' }));
+    };
+
+    const handleChange = (e) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+        setError('');
+        setIsEmailDuplicate(false);
+    };
+
+    const handleLoginSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
-
         try {
-            const success = await onLogin(username, password);
+            const success = await onLogin(form.email, form.password);
             if (!success) {
                 setError('Credenziali non valide. Riprova.');
-                setPassword('');
+                setForm((f) => ({ ...f, password: '' }));
             }
         } catch (err) {
             setError('Si è verificato un errore. Riprova più tardi.');
         }
-
         setIsLoading(false);
+    };
+
+    const handleRegisterSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+
+        if (form.password !== form.passwordConfirm) {
+            setError('Le password non coincidono.');
+            return;
+        }
+        if (form.password.length < 8) {
+            setError('La password deve essere di almeno 8 caratteri.');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await pb.collection('users').create({
+                email: form.email,
+                password: form.password,
+                passwordConfirm: form.passwordConfirm,
+                name: form.name || undefined,
+                emailVisibility: true,
+            });
+            const success = await onLogin(form.email, form.password);
+            if (!success) {
+                setError('Account creato, ma il login automatico è fallito. Prova ad accedere manualmente.');
+                switchMode('login');
+            }
+        } catch (err) {
+            const data = err?.response?.data || err?.data;
+            if (
+                data?.email?.code === 'validation_not_unique' ||
+                data?.email?.message?.toLowerCase().includes('unique')
+            ) {
+                setIsEmailDuplicate(true);
+            } else if (data?.password?.message) {
+                setError('Password: ' + data.password.message);
+            } else {
+                setError('Errore durante la registrazione. Controlla i dati e riprova.');
+            }
+        }
+        setIsLoading(false);
+    };
+
+    const handleResetSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+        try {
+            await pb.collection('users').requestPasswordReset(form.email);
+            setResetSent(true);
+        } catch (err) {
+            setError('Impossibile inviare la richiesta. Riprova più tardi o contatta chi gestisce il servizio.');
+        }
+        setIsLoading(false);
+    };
+
+    const titles = {
+        login: { h: 'BOB Prompt Library', p: 'Accedi per gestire i tuoi prompt AI' },
+        register: { h: 'Crea un account', p: 'Registrati per iniziare a usare BOB Prompt Library' },
+        reset: { h: 'Reimposta password', p: 'Ti invieremo un link per impostarne una nuova' },
     };
 
     return (
@@ -70,86 +146,97 @@ export default function Login({ onLogin, onClose }) {
                         <BookOpen className="w-10 h-10 text-white" />
                     </div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent mb-2">
-                        BOB Prompt Library
+                        {titles[mode].h}
                     </h1>
-                    <p className="text-slate-600 text-sm">
-                        Accedi per gestire i tuoi prompt AI
-                    </p>
+                    <p className="text-slate-600 text-sm">{titles[mode].p}</p>
                 </div>
 
-                {/* Login Form */}
                 <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 p-8 animate-in fade-in slide-in-from-bottom duration-700">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Username Field */}
-                        <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-2">
-                                Email
-                            </label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <User className="h-5 w-5 text-slate-400" />
+
+                    {/* ── LOGIN ─────────────────────────────────────────── */}
+                    {mode === 'login' && (
+                        <form onSubmit={handleLoginSubmit} className="space-y-6">
+                            <Field icon={User} label="Email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="la-tua@email.com" autoFocus />
+                            <Field icon={Lock} label="Password" name="password" type="password" value={form.password} onChange={handleChange} placeholder="Inserisci password" />
+
+                            {error && <ErrorBox message={error} />}
+
+                            <SubmitButton isLoading={isLoading} disabled={connectionStatus !== 'connected'} loadingLabel="Accesso in corso..." label="Accedi" icon={Lock} />
+
+                            <div className="flex items-center justify-between text-sm pt-1">
+                                <button type="button" onClick={() => switchMode('reset')} className="text-slate-500 hover:text-sky-600 transition-colors">
+                                    Password dimenticata?
+                                </button>
+                                <button type="button" onClick={() => switchMode('register')} className="text-sky-600 font-medium hover:text-sky-700 transition-colors">
+                                    Registrati
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* ── REGISTER ──────────────────────────────────────── */}
+                    {mode === 'register' && (
+                        isEmailDuplicate ? (
+                            <div className="space-y-5">
+                                <div className="flex flex-col items-center text-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                                    <AlertCircle className="w-8 h-8 text-amber-500" />
+                                    <div>
+                                        <p className="font-bold text-slate-800">Account già esistente</p>
+                                        <p className="text-sm text-slate-600 mt-1">
+                                            L'email <span className="font-mono font-semibold text-sky-700">{form.email}</span> è già registrata.
+                                        </p>
+                                    </div>
                                 </div>
-                                <input
-                                    id="username"
-                                    type="email"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
-                                    placeholder="la-tua@email.com"
-                                    required
-                                    autoFocus
-                                />
+                                <button onClick={() => switchMode('login')} className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-all">
+                                    Vai al Login
+                                </button>
                             </div>
-                        </div>
+                        ) : (
+                            <form onSubmit={handleRegisterSubmit} className="space-y-5">
+                                <Field icon={User} label="Nome (opzionale)" name="name" type="text" value={form.name} onChange={handleChange} placeholder="Roberto" required={false} />
+                                <Field icon={Mail} label="Email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="la-tua@email.com" autoFocus />
+                                <Field icon={Lock} label="Password (min 8 caratteri)" name="password" type="password" value={form.password} onChange={handleChange} placeholder="••••••••" />
+                                <Field icon={Lock} label="Conferma password" name="passwordConfirm" type="password" value={form.passwordConfirm} onChange={handleChange} placeholder="••••••••" />
 
-                        {/* Password Field */}
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-slate-400" />
+                                {error && <ErrorBox message={error} />}
+
+                                <SubmitButton isLoading={isLoading} disabled={connectionStatus !== 'connected'} loadingLabel="Creazione account..." label="Crea account" icon={User} />
+
+                                <button type="button" onClick={() => switchMode('login')} className="w-full text-sm text-slate-500 hover:text-sky-600 transition-colors">
+                                    Hai già un account? Accedi
+                                </button>
+                            </form>
+                        )
+                    )}
+
+                    {/* ── RESET PASSWORD ────────────────────────────────── */}
+                    {mode === 'reset' && (
+                        resetSent ? (
+                            <div className="text-center space-y-5">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full">
+                                    <CheckCircle className="w-10 h-10 text-emerald-600" />
                                 </div>
-                                <input
-                                    id="password"
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
-                                    placeholder="Inserisci password"
-                                    required
-                                />
+                                <p className="text-slate-600 text-sm">
+                                    Se l'indirizzo <span className="font-mono font-semibold">{form.email}</span> è registrato, riceverai a breve un'email con le istruzioni per reimpostare la password.
+                                </p>
+                                <button onClick={() => switchMode('login')} className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-all">
+                                    Torna al Login
+                                </button>
                             </div>
-                        </div>
+                        ) : (
+                            <form onSubmit={handleResetSubmit} className="space-y-6">
+                                <Field icon={Mail} label="Email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="la-tua@email.com" autoFocus />
 
-                        {/* Error Message */}
-                        {error && (
-                            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm animate-in fade-in slide-in-from-top duration-300">
-                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                                <span>{error}</span>
-                            </div>
-                        )}
+                                {error && <ErrorBox message={error} />}
 
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={isLoading || connectionStatus !== 'connected'}
-                            className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {isLoading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <span>Accesso in corso...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Lock className="w-5 h-5" />
-                                    <span>Accedi</span>
-                                </>
-                            )}
-                        </button>
-                    </form>
+                                <SubmitButton isLoading={isLoading} disabled={connectionStatus !== 'connected'} loadingLabel="Invio in corso..." label="Invia link di reset" icon={Mail} />
+
+                                <button type="button" onClick={() => switchMode('login')} className="w-full text-sm text-slate-500 hover:text-sky-600 transition-colors">
+                                    Torna al Login
+                                </button>
+                            </form>
+                        )
+                    )}
 
                     {/* Connection Status — Semaforo PocketBase */}
                     <div className="mt-4 flex items-center justify-center gap-2 text-xs">
@@ -173,7 +260,16 @@ export default function Login({ onLogin, onClose }) {
                         )}
                     </div>
 
-                    {/* Bottom Close Button for Mobile */}
+                    {onGuest && (
+                        <button
+                            onClick={onGuest}
+                            className="w-full mt-4 flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-600 text-sm transition-colors"
+                        >
+                            <Eye className="w-4 h-4" />
+                            Continua come ospite (sola lettura)
+                        </button>
+                    )}
+
                     {onClose && (
                         <button
                             onClick={onClose}
@@ -185,11 +281,65 @@ export default function Login({ onLogin, onClose }) {
                     )}
                 </div>
 
-                {/* Footer */}
                 <p className="text-center text-xs text-slate-500 mt-6">
                     BOB Prompt Library © 2025
                 </p>
             </div>
         </div>
+    );
+}
+
+function Field({ icon: Icon, label, name, type, value, onChange, placeholder, autoFocus, required = true }) {
+    return (
+        <div>
+            <label htmlFor={name} className="block text-sm font-medium text-slate-700 mb-2">{label}</label>
+            <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Icon className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                    id={name}
+                    name={name}
+                    type={type}
+                    value={value}
+                    onChange={onChange}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
+                    placeholder={placeholder}
+                    required={required}
+                    autoFocus={autoFocus}
+                />
+            </div>
+        </div>
+    );
+}
+
+function ErrorBox({ message }) {
+    return (
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm animate-in fade-in slide-in-from-top duration-300">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{message}</span>
+        </div>
+    );
+}
+
+function SubmitButton({ isLoading, disabled, loadingLabel, label, icon: Icon }) {
+    return (
+        <button
+            type="submit"
+            disabled={isLoading || disabled}
+            className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+            {isLoading ? (
+                <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>{loadingLabel}</span>
+                </>
+            ) : (
+                <>
+                    <Icon className="w-5 h-5" />
+                    <span>{label}</span>
+                </>
+            )}
+        </button>
     );
 }
