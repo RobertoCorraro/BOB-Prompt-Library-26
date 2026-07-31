@@ -1,4 +1,4 @@
-name: Deploy to liste.frasi.info
+name: Deploy to lista.frasi.info
 
 on:
   push:
@@ -6,45 +6,56 @@ on:
       - main
   workflow_dispatch: # avvio manuale dal tab Actions
 
+env:
+  IMAGE_NAME: ghcr.io/robertocorraro/bob-prompt-library-26
+
 jobs:
   build-and-deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       # 1 — Checkout
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2 — Node.js 20 LTS
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      # 2 — Login su GitHub Container Registry
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3 — Installa dipendenze
-      - name: Install dependencies
-        run: npm ci
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # 4 — Build Vite (inietta la URL di PocketBase e la versione build)
-      - name: Build
-        run: npm run build
-        env:
-          VITE_POCKETBASE_URL: ${{ secrets.VITE_POCKETBASE_URL }}
-          VITE_APP_VERSION: ${{ github.run_number }}
-
-      # 5 — Deploy via rsync su SSH
-      - name: Deploy via rsync over SSH
-        uses: burnett01/rsync-deployments@7.0.1
+      # 3 — Build immagine (Node build + Nginx serve) e push su GHCR
+      #     VITE_POCKETBASE_URL viene letto dal .env committato nel repo,
+      #     copiato nell'immagine durante la build (nessun secret necessario).
+      - name: Build and push image
+        uses: docker/build-push-action@v6
         with:
-          # -a preserva permessi, -v verboso, -z comprimi, -r ricorsivo
-          # --delete rimuove i file vecchi sul server
-          # --exclude preserva eventuali file locali del server (.htaccess, .env)
-          switches: -avzr --delete --exclude='.env' --exclude='.htaccess'
-          path: dist/
-          remote_path: ${{ secrets.DEPLOY_PATH }}
-          remote_host: ${{ secrets.DEPLOY_HOST }}
-          remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
-          remote_port: ${{ secrets.DEPLOY_PORT }}
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest
+          build-args: |
+            VITE_APP_VERSION=${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 4 — Deploy sul VPS: pull della nuova immagine e restart del container
+      - name: Deploy on VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            cd ${{ secrets.DEPLOY_COMPOSE_PATH }}
+            docker compose pull app
+            docker compose up -d app
