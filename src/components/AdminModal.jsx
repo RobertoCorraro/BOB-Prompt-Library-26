@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Braces, History, RotateCcw, Clock, Maximize2, Minimize2 } from 'lucide-react';
 import { triggerHaptic, formatDate } from '../lib/utils';
 import { DEFAULT_COLOR } from '../lib/constants';
+import Modal from './Modal';
 
 export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialData, categories, types, promptTags, revisions = [] }) {
     const [formData, setFormData] = useState({
@@ -107,21 +108,20 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
     };
 
     return (
-        <div
-            className={`fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 ${isFullscreen ? 'p-0 sm:p-0' : ''}`}
-            onClick={handleClose}
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            labelledBy="adminmodal-title"
+            overlayClassName={`fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 ${isFullscreen ? 'p-0 sm:p-0' : ''}`}
+            panelClassName={`bg-white dark:bg-slate-900 w-full sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 transition-all ${isFullscreen
+                ? 'h-full sm:h-full max-w-none rounded-none sm:rounded-none'
+                : 'sm:max-w-lg max-h-[90vh]'
+                }`}
         >
-            <div
-                className={`bg-white dark:bg-slate-900 w-full sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 transition-all ${isFullscreen
-                    ? 'h-full sm:h-full max-w-none rounded-none sm:rounded-none'
-                    : 'sm:max-w-lg max-h-[90vh]'
-                    }`}
-                onClick={(e) => e.stopPropagation()}
-            >
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
                     <div className="flex items-center gap-3">
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate max-w-[150px] sm:max-w-none">
+                        <h2 id="adminmodal-title" className="text-lg font-bold text-slate-800 dark:text-slate-100 truncate max-w-[150px] sm:max-w-none">
                             {initialData ? 'Modifica' : 'Nuovo'} <span className="hidden sm:inline">Prompt</span>
                         </h2>
                         {/* History Button */}
@@ -349,7 +349,6 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                         <span>CHIUDI</span>
                     </button>
                 </div>
-            </div>
-        </div>
+        </Modal>
     );
 }

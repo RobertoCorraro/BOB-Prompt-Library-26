@@ -11,7 +11,7 @@ import FilterBar from './components/FilterBar';
 import PromptCard from './components/PromptCard';
 import AdminModal from './components/AdminModal';
 import SettingsModal from './components/SettingsModal';
-import VariableModal from './components/VariableModal';
+import Modal from './components/Modal';
 import PromptViewModal from './components/PromptViewModal';
 import FilterSidebar from './components/FilterSidebar';
 import AuthGuardModal from './components/AuthGuardModal';
@@ -615,10 +615,15 @@ export default function App() {
         onAddItem={handleAddMetadata} onUpdateItem={handleUpdateMetadata} onDeleteItem={handleDeleteMetadata} />
 
       {compileModal.isOpen && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
+        <Modal
+          isOpen={compileModal.isOpen}
+          onClose={() => setCompileModal({ ...compileModal, isOpen: false })}
+          labelledBy="compile-title"
+          overlayClassName="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4"
+          panelClassName="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"
+        >
             <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <h3 className="text-xl font-bold">{compileModal.prompt.title}</h3>
+              <h3 id="compile-title" className="text-xl font-bold">{compileModal.prompt.title}</h3>
               <button onClick={() => setCompileModal({ ...compileModal, isOpen: false })}><X className="w-6 h-6 text-slate-400" /></button>
             </div>
             <div className="p-6 space-y-4">
@@ -638,8 +643,7 @@ export default function App() {
               <button onClick={() => { triggerHaptic('success'); navigator.clipboard.writeText(handleCompile()); setCompileModal({ ...compileModal, isOpen: false }); setToast({ show: true, message: 'Prompt compilato e copiato!', type: 'success' }); }}
                 className="w-full bg-violet-600 text-white font-bold py-3 rounded-xl">Copia &amp; Chiudi</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {toast.show && (

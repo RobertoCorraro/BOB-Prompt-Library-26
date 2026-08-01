@@ -1,10 +1,9 @@
 import React from 'react';
 import { ShieldAlert, LogIn, X } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
+import Modal from './Modal';
 
 export default function AuthGuardModal({ isOpen, onClose, onLogin }) {
-    if (!isOpen) return null;
-
     const handleClose = () => {
         triggerHaptic('light');
         onClose();
@@ -17,20 +16,19 @@ export default function AuthGuardModal({ isOpen, onClose, onLogin }) {
     };
 
     return (
-        <div
-            className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
-            onClick={handleClose}
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            labelledBy="authguard-title"
+            overlayClassName="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
+            panelClassName="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 slide-in-from-bottom-8 duration-300"
         >
-            <div
-                className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 slide-in-from-bottom-8 duration-300"
-                onClick={(e) => e.stopPropagation()}
-            >
                 <div className="p-8 text-center">
                     <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
                         <ShieldAlert className="w-8 h-8 text-amber-600 dark:text-amber-500" />
                     </div>
 
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                    <h3 id="authguard-title" className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                         Accedi
                     </h3>
 
@@ -61,7 +59,6 @@ export default function AuthGuardModal({ isOpen, onClose, onLogin }) {
                     <X className="w-4 h-4" />
                     <span>CHIUDI</span>
                 </button>
-            </div>
-        </div>
+        </Modal>
     );
 }

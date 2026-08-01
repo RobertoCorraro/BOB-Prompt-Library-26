@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Copy, Zap, Clock, Tag, Type, Calendar, Edit2, Trash2, CopyPlus, Star, Check, User } from 'lucide-react';
 import { triggerHaptic, extractVariables, formatDate } from '../lib/utils';
+import Modal from './Modal';
 
 export default function PromptViewModal({
     isOpen,
@@ -59,11 +60,13 @@ export default function PromptViewModal({
     };
 
     return (
-        <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-            <div
-                className="bg-white dark:bg-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300"
-                onClick={(e) => e.stopPropagation()}
-            >
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            labelledBy="promptview-title"
+            overlayClassName="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
+            panelClassName="bg-white dark:bg-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300"
+        >
                 {/* Header */}
                 <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/20">
                     <div className="flex-1 min-w-0 mr-4">
@@ -75,7 +78,7 @@ export default function PromptViewModal({
                                 {prompt.type}
                             </span>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-white truncate">{prompt.title}</h3>
+                        <h3 id="promptview-title" className="text-xl font-bold text-slate-800 dark:text-white truncate">{prompt.title}</h3>
                     </div>
                     <button
                         onClick={onClose}
@@ -217,7 +220,6 @@ export default function PromptViewModal({
                         <span>CHIUDI</span>
                     </button>
                 </div>
-            </div>
-        </div>
+        </Modal>
     );
 }

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { X, Tag, FolderTree, Type, SlidersHorizontal, Heart, RotateCcw, Settings, Plus } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
 import { DEFAULT_COLOR } from '../lib/constants';
+import Modal from './Modal';
 
 /**
  * Intestazione di sezione con, per gli utenti autenticati, il pulsante per
@@ -49,28 +50,6 @@ export default function FilterSidebar({
     isLoggedIn,
     onOpenSettings
 }) {
-    const sidebarRef = useRef(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-                onClose();
-            }
-        };
-
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-            document.addEventListener('mousedown', handleClickOutside);
-        } else {
-            document.body.style.overflow = '';
-        }
-
-        return () => {
-            document.body.style.overflow = '';
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [isOpen, onClose]);
-
     const toggleTagFilter = (tagName) => {
         triggerHaptic('light');
         if (selectedTags.includes(tagName)) {
@@ -80,14 +59,14 @@ export default function FilterSidebar({
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-[100] flex bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300 overflow-hidden">
-            <div
-                ref={sidebarRef}
-                className="w-full max-w-[280px] h-full bg-white dark:bg-slate-950 shadow-2xl border-r border-slate-200 dark:border-slate-800 flex flex-col animate-in slide-in-from-left duration-500 ease-out"
-            >
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            labelledBy="filtersidebar-title"
+            overlayClassName="fixed inset-0 z-[100] flex bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300 overflow-hidden"
+            panelClassName="w-full max-w-[280px] h-full bg-white dark:bg-slate-950 shadow-2xl border-r border-slate-200 dark:border-slate-800 flex flex-col animate-in slide-in-from-left duration-500 ease-out"
+        >
                 {/* Header */}
                 <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950 sticky top-0 z-10">
                     <div className="flex items-center gap-2.5">
@@ -95,7 +74,7 @@ export default function FilterSidebar({
                             <SlidersHorizontal className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-none mb-1">Filtri</h2>
+                            <h2 id="filtersidebar-title" className="text-lg font-bold text-slate-900 dark:text-white leading-none mb-1">Filtri</h2>
                             <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Ecommerce Style</p>
                         </div>
                     </div>
@@ -276,7 +255,6 @@ export default function FilterSidebar({
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+        </Modal>
     );
 }

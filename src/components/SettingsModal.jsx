@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Plus, Trash2, Loader2, Check, Pencil, Save, RotateCcw } from 'lucide-react';
 import { COLOR_PALETTE, DEFAULT_COLOR } from '../lib/constants';
 import { triggerHaptic } from '../lib/utils';
+import Modal from './Modal';
 
 export default function SettingsModal({ isOpen, onClose, title, singular, items, onAddItem, onUpdateItem, onDeleteItem, isLoading }) {
     // `singular` evita di ricavare il singolare tagliando l'ultima lettera del
@@ -64,16 +65,15 @@ export default function SettingsModal({ isOpen, onClose, title, singular, items,
     };
 
     return (
-        <div
-            className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200"
-            onClick={handleClose}
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            labelledBy="settings-title"
+            overlayClassName="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200"
+            panelClassName="bg-white dark:bg-slate-900 w-full sm:rounded-2xl rounded-t-2xl shadow-xl sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
         >
-            <div
-                className="bg-white dark:bg-slate-900 w-full sm:rounded-2xl rounded-t-2xl shadow-xl sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
-                onClick={(e) => e.stopPropagation()}
-            >
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                    <h2 id="settings-title" className="text-lg font-bold text-slate-800 dark:text-slate-100">
                         {editingItem ? `Modifica ${one}` : `Gestisci ${title}`}
                     </h2>
                     <button onClick={handleClose} className="text-slate-500 hover:text-slate-600 transition-colors p-1 hover:bg-slate-200 rounded-full">
@@ -200,7 +200,6 @@ export default function SettingsModal({ isOpen, onClose, title, singular, items,
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
+        </Modal>
     );
 }
