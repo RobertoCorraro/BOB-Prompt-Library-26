@@ -20,7 +20,7 @@ const FEATURES = [
         icon: Braces,
         title: 'Variabili dinamiche',
         text: 'Scrivi {{cliente}} o {{tono}} nel prompt: al momento dell\'uso compili i campi in un form e copi il testo già pronto.',
-        accent: 'from-indigo-500 to-violet-600',
+        accent: 'from-fuchsia-600 to-purple-600',
     },
     {
         icon: History,
@@ -32,7 +32,7 @@ const FEATURES = [
         icon: Search,
         title: 'Ricerca e filtri',
         text: 'Cerca nel titolo e nel contenuto, poi affina per categoria, tipo o tag multipli. Nessun prompt si perde più.',
-        accent: 'from-emerald-500 to-teal-600',
+        accent: 'from-emerald-500 to-green-600',
     },
     {
         icon: Star,
