@@ -37,6 +37,14 @@ sessione).
   librerie separate per utente.
 - **Registrazione aperta** (`users.createRule` vuoto) e login senza
   verifica email (`authRule` vuoto): serve perché l'SMTP non è attivo.
+- **`owner` sui prompt**: campo relation verso `users`, valorizzato alla
+  creazione e mostrato in piccolo nelle card. È solo un'attribuzione
+  visiva, **non** un permesso: chiunque può comunque modificare o
+  eliminare i prompt altrui. Per renderlo un vero vincolo servirebbe
+  cambiare update/deleteRule in `@request.auth.id = owner`.
+  Per risolvere i nomi degli altri autori, `users` ha list/view rule
+  aperte agli autenticati (updateRule invariata: nessuno modifica
+  l'account altrui), quindi nome ed email sono visibili tra utenti.
 - **Account demo**: `demo@frasi.info` / `demoBPL2026`, citato in chiaro
   nella landing e quindi presente nel bundle pubblico. Ha gli stessi
   permessi di scrittura di un utente normale: chiunque trovi le
