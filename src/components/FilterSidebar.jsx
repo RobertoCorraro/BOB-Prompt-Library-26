@@ -1,7 +1,34 @@
 import React, { useEffect, useRef } from 'react';
-import { X, Tag, FolderTree, Type, SlidersHorizontal, Heart, RotateCcw, Settings } from 'lucide-react';
+import { X, Tag, FolderTree, Type, SlidersHorizontal, Heart, RotateCcw, Settings, Plus } from 'lucide-react';
 import { triggerHaptic } from '../lib/utils';
 import { DEFAULT_COLOR } from '../lib/constants';
+
+/**
+ * Intestazione di sezione con, per gli utenti autenticati, il pulsante per
+ * aggiungere/gestire le voci di quella tassonomia (categorie, tipi, tag).
+ */
+function SectionHeader({ icon: Icon, label, canManage, onManage }) {
+    return (
+        <div className="flex items-center justify-between gap-2">
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+            </h3>
+            {canManage && (
+                <button
+                    type="button"
+                    onClick={() => { triggerHaptic('light'); onManage(); }}
+                    className="shrink-0 flex items-center gap-1 pl-1.5 pr-2 py-1 rounded-lg text-[11px] font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/30 border border-violet-100 dark:border-violet-900/50 hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors"
+                    title={`Aggiungi o gestisci: ${label}`}
+                    aria-label={`Aggiungi o gestisci ${label}`}
+                >
+                    <Plus className="w-3.5 h-3.5" />
+                    Aggiungi
+                </button>
+            )}
+        </div>
+    );
+}
 
 export default function FilterSidebar({
     isOpen,
@@ -114,10 +141,12 @@ export default function FilterSidebar({
 
                     {/* Section: Categories */}
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <FolderTree className="w-3.5 h-3.5" />
-                            Categorie
-                        </h3>
+                        <SectionHeader
+                            icon={FolderTree}
+                            label="Categorie"
+                            canManage={isLoggedIn}
+                            onManage={() => onOpenSettings('categories')}
+                        />
                         <div className="space-y-1.5">
                             {categories.map(cat => {
                                 const isSelected = activeCategory === cat.name;
@@ -146,10 +175,12 @@ export default function FilterSidebar({
 
                     {/* Section: Type Filter */}
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <Type className="w-3.5 h-3.5" />
-                            Tipologie
-                        </h3>
+                        <SectionHeader
+                            icon={Type}
+                            label="Tipologie"
+                            canManage={isLoggedIn}
+                            onManage={() => onOpenSettings('types')}
+                        />
                         <div className="space-y-1.5">
                             <button
                                 onClick={() => {
@@ -189,10 +220,12 @@ export default function FilterSidebar({
 
                     {/* Section: Tag Filter */}
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <Tag className="w-3.5 h-3.5" />
-                            Tag
-                        </h3>
+                        <SectionHeader
+                            icon={Tag}
+                            label="Tag"
+                            canManage={isLoggedIn}
+                            onManage={() => onOpenSettings('tags')}
+                        />
                         {tags.length === 0 ? (
                             <p className="px-2 text-sm text-slate-400 italic">Nessun tag disponibile.</p>
                         ) : (

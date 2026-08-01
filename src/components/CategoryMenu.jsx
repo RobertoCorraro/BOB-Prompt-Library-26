@@ -4,9 +4,12 @@ import { DEFAULT_COLOR } from '../lib/constants';
 
 export default function CategoryMenu({ categories, activeCategory, onSelectCategory }) {
     return (
-        <div className="sticky top-16 z-40 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-3 transition-colors duration-200">
-            <div className="max-w-4xl mx-auto px-4 overflow-x-auto no-scrollbar">
-                <div className="flex gap-2 min-w-max">
+        <div className="sticky top-16 z-40 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-1.5 transition-colors duration-200">
+            {/* overflow-x-auto forza overflow-y ad "auto": senza overflow-y-hidden
+                la pill attiva (scale-105 + ring + shadow) sborda e genera una
+                barra di scorrimento verticale. Il py interno le lascia spazio. */}
+            <div className="max-w-4xl mx-auto px-4 overflow-x-auto overflow-y-hidden no-scrollbar">
+                <div className="flex gap-2 min-w-max py-1.5">
                     {categories.map((cat) => {
                         const isSelected = activeCategory === cat.name;
                         // Handle 'Tutti' or string-only categories (fallback)

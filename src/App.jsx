@@ -43,6 +43,13 @@ const normalizeRecord = (record) => ({
 
 const idFor = (name, list) => list.find((item) => item.name === name)?.id ?? name;
 
+// Etichette italiane delle tassonomie, usate dal modale di gestione.
+const TAXONOMY_LABELS = {
+  categories: { plural: 'Categorie', singular: 'Categoria' },
+  types:      { plural: 'Tipologie', singular: 'Tipologia' },
+  tags:       { plural: 'Tag',       singular: 'Tag' },
+};
+
 // ─── Nomi collection PocketBase ──────────────────────────────────────────────
 const COLL = {
   prompts:    'prompts',
@@ -501,7 +508,7 @@ export default function App() {
         </div>
       )}
 
-      <main id="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+      <main id="main" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-8 space-y-6">
         <section>
           <CategoryMenu
             categories={[{ id: 'all', name: 'Tutti', color: { bg: 'bg-white', text: 'text-slate-600', border: 'border-slate-200' } }, ...categories]}
@@ -602,7 +609,8 @@ export default function App() {
         initialData={modalInitialData} categories={categories.map(c => c.name)} types={types.map(t => t.name)}
         promptTags={tags.map(t => t.name)} revisions={modalInitialData ? (revisions[modalInitialData.id] || []) : []} />
 
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title={settingsMode}
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}
+        title={TAXONOMY_LABELS[settingsMode].plural} singular={TAXONOMY_LABELS[settingsMode].singular}
         items={settingsMode === 'categories' ? categories : settingsMode === 'types' ? types : tags}
         onAddItem={handleAddMetadata} onUpdateItem={handleUpdateMetadata} onDeleteItem={handleDeleteMetadata} />
 

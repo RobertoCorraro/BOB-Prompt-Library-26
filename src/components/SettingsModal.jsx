@@ -3,7 +3,10 @@ import { X, Plus, Trash2, Loader2, Check, Pencil, Save, RotateCcw } from 'lucide
 import { COLOR_PALETTE, DEFAULT_COLOR } from '../lib/constants';
 import { triggerHaptic } from '../lib/utils';
 
-export default function SettingsModal({ isOpen, onClose, title, items, onAddItem, onUpdateItem, onDeleteItem, isLoading }) {
+export default function SettingsModal({ isOpen, onClose, title, singular, items, onAddItem, onUpdateItem, onDeleteItem, isLoading }) {
+    // `singular` evita di ricavare il singolare tagliando l'ultima lettera del
+    // plurale: funziona in inglese ma non in italiano ("Tag" -> "Ta").
+    const one = singular || title;
     const [newItemName, setNewItemName] = useState('');
     const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
     const [editingItem, setEditingItem] = useState(null); // The item currently being edited
@@ -71,7 +74,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
             >
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
                     <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                        {editingItem ? `Modifica ${title.slice(0, -1)}` : `Gestisci ${title}`}
+                        {editingItem ? `Modifica ${one}` : `Gestisci ${title}`}
                     </h2>
                     <button onClick={handleClose} className="text-slate-500 hover:text-slate-600 transition-colors p-1 hover:bg-slate-200 rounded-full">
                         <X className="w-5 h-5" />
@@ -85,7 +88,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                 type="text"
                                 value={newItemName}
                                 onChange={(e) => setNewItemName(e.target.value)}
-                                placeholder={editingItem ? "Modifica nome..." : `Nuova ${title.slice(0, -1)}...`}
+                                placeholder={editingItem ? "Modifica nome..." : `Nuovo/a ${one}...`}
                                 className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-base"
                             />
                             <button
