@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, Trash2, Braces, History, RotateCcw, Clock, Maximize2, Minimize2 } from 'lucide-react';
-import { triggerHaptic } from '../lib/utils';
+import { triggerHaptic, formatDate } from '../lib/utils';
 import { DEFAULT_COLOR } from '../lib/constants';
-import { supabase } from '../lib/supabase';
 
 export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialData, categories, types, promptTags, revisions = [] }) {
     const [formData, setFormData] = useState({
@@ -273,7 +272,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-1.5 text-xs text-slate-500">
                                                     <Clock className="w-3 h-3" />
-                                                    <span>{new Date(rev.versionDate).toLocaleString()}</span>
+                                                    <span>{formatDate(rev.created, { dateStyle: 'medium', timeStyle: 'short' }) || 'Data non disponibile'}</span>
                                                 </div>
                                                 <button
                                                     onClick={() => handleRestore(rev)}

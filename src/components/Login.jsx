@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Lock, User, Mail, AlertCircle, CheckCircle, Eye, X } from 'lucide-react';
+import { BookOpen, Lock, User, Mail, AlertCircle, CheckCircle, X, ArrowLeft } from 'lucide-react';
 import { pb, isPocketBaseConfigured, isSmtpConfigured } from '../lib/pocketbase';
 
-export default function Login({ onLogin, onClose, onGuest }) {
-    const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset'
+export default function Login({ onLogin, onClose, onBack, initialMode = 'login' }) {
+    const [mode, setMode] = useState(initialMode); // 'login' | 'register' | 'reset'
     const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '' });
     const [error, setError] = useState('');
     const [isEmailDuplicate, setIsEmailDuplicate] = useState(false);
@@ -131,6 +131,15 @@ export default function Login({ onLogin, onClose, onGuest }) {
     return (
         <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="w-full max-w-md relative">
+                {onBack && (
+                    <button
+                        onClick={onBack}
+                        className="absolute -top-12 left-0 p-2 text-white/70 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-medium"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                        Indietro
+                    </button>
+                )}
                 {onClose && (
                     <button
                         onClick={onClose}
@@ -275,16 +284,6 @@ export default function Login({ onLogin, onClose, onGuest }) {
                             </span>
                         )}
                     </div>
-
-                    {onGuest && (
-                        <button
-                            onClick={onGuest}
-                            className="w-full mt-4 flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-600 text-sm transition-colors"
-                        >
-                            <Eye className="w-4 h-4" />
-                            Continua come ospite (sola lettura)
-                        </button>
-                    )}
 
                     {onClose && (
                         <button

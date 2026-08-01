@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Copy, Zap, Clock, Tag, Type, Calendar, Edit2, Trash2, CopyPlus, Star, Check } from 'lucide-react';
-import { triggerHaptic, extractVariables } from '../lib/utils';
+import { triggerHaptic, extractVariables, formatDate } from '../lib/utils';
 
 export default function PromptViewModal({
     isOpen,
@@ -124,12 +124,14 @@ export default function PromptViewModal({
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Info Temporali</label>
                             <div className="flex flex-col gap-1 text-xs text-slate-500">
-                                <span className="flex items-center gap-2">
-                                    <Calendar className="w-3.5 h-3.5" /> Creato il: {new Date(prompt.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
-                                </span>
-                                {prompt.updated_at && (
+                                {formatDate(prompt.created) && (
                                     <span className="flex items-center gap-2">
-                                        <Clock className="w-3.5 h-3.5" /> Ultima modifica: {new Date(prompt.updated_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+                                        <Calendar className="w-3.5 h-3.5" /> Creato il: {formatDate(prompt.created, { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    </span>
+                                )}
+                                {formatDate(prompt.updated) && (
+                                    <span className="flex items-center gap-2">
+                                        <Clock className="w-3.5 h-3.5" /> Ultima modifica: {formatDate(prompt.updated, { day: 'numeric', month: 'long', year: 'numeric' })}
                                     </span>
                                 )}
                             </div>

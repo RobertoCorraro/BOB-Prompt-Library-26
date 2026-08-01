@@ -46,3 +46,29 @@ export const triggerHaptic = (type = 'medium') => {
             navigator.vibrate(20);
     }
 };
+
+/**
+ * Converte una data PocketBase ("2026-08-01 14:53:28.228Z") in un oggetto Date.
+ * PocketBase usa lo spazio al posto della "T": Safari/iOS non lo accetta,
+ * quindi normalizziamo prima di passarlo al costruttore.
+ * @param {string|Date|undefined} value
+ * @returns {Date|null} null se il valore manca o non è una data valida
+ */
+export const parseDate = (value) => {
+    if (!value) return null;
+    const d = value instanceof Date ? value : new Date(String(value).replace(' ', 'T'));
+    return Number.isNaN(d.getTime()) ? null : d;
+};
+
+/**
+ * Formatta una data PocketBase secondo le opzioni Intl indicate.
+ * Restituisce una stringa vuota se la data manca o non è valida,
+ * così la UI non mostra mai "Invalid Date".
+ * @param {string|Date|undefined} value
+ * @param {Intl.DateTimeFormatOptions} options
+ * @param {string} locale
+ */
+export const formatDate = (value, options = { day: 'numeric', month: 'short', year: 'numeric' }, locale = 'it-IT') => {
+    const d = parseDate(value);
+    return d ? d.toLocaleString(locale, options) : '';
+};

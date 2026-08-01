@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star, Braces, Zap, Type, Trash2, Eye, CopyPlus } from 'lucide-react';
 import { DEFAULT_COLOR } from '../lib/constants';
-import { extractVariables, triggerHaptic } from '../lib/utils';
+import { extractVariables, triggerHaptic, formatDate } from '../lib/utils';
 
 export default function PromptCard({
     prompt,
@@ -168,15 +168,17 @@ export default function PromptCard({
                             </div>
                         </div>
                     )}
-                    <div className="ml-auto flex items-center gap-1 text-slate-400 dark:text-slate-500">
-                        <Calendar className="w-3 h-3" />
-                        <span title={new Date(prompt.created_at).toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}>
-                            {new Date(prompt.created_at).toLocaleString('it-IT', {
-                                timeZone: 'Europe/Rome',
-                                day: '2-digit', month: '2-digit', year: 'numeric'
-                            })}
-                        </span>
-                    </div>
+                    {formatDate(prompt.created) && (
+                        <div className="ml-auto flex items-center gap-1 text-slate-400 dark:text-slate-500">
+                            <Calendar className="w-3 h-3" />
+                            <span title={formatDate(prompt.created, { timeZone: 'Europe/Rome', dateStyle: 'long', timeStyle: 'short' })}>
+                                {formatDate(prompt.created, {
+                                    timeZone: 'Europe/Rome',
+                                    day: '2-digit', month: '2-digit', year: 'numeric'
+                                })}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -4,6 +4,7 @@ import { pb, isPocketBaseConfigured, normalizeTags, serializeTags } from './lib/
 import { COLOR_PALETTE } from './lib/constants';
 import { extractVariables, triggerHaptic } from './lib/utils';
 import Login from './components/Login';
+import LandingPage, { DEMO_CREDENTIALS } from './components/LandingPage';
 import Header from './components/Header';
 import CategoryMenu from './components/CategoryMenu';
 import FilterBar from './components/FilterBar';
@@ -93,6 +94,7 @@ export default function App() {
   const [appState, setAppState] = useState('loading');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // modalità iniziale della schermata Login
 
   const [activeCategory, setActiveCategory] = useState('Tutti');
   const [activeType, setActiveType] = useState('Tutti');
@@ -190,7 +192,7 @@ export default function App() {
         }
       }
 
-      setAppState('auth');
+      setAppState('landing');
       setLoading(false);
     }
     bootstrap();
@@ -225,13 +227,24 @@ export default function App() {
     pb.authStore.clear();
     localStorage.removeItem('bob_pb_auth');
     setIsAuthenticated(false);
-    setAppState('auth');
+    setAppState('landing');
     triggerHaptic('light');
   };
 
-  const handleContinueAsGuest = () => {
-    setAppState('ready');
-    fetchData(false);
+  const handleDemoLogin = async () => {
+    triggerHaptic('light');
+    const ok = await handleLogin(DEMO_CREDENTIALS.email, DEMO_CREDENTIALS.password);
+    if (!ok) {
+      // L'account demo può essere stato rimosso o rinominato lato PocketBase:
+      // in quel caso apriamo il login normale già compilato con l'email demo.
+      setAuthMode('login');
+      setAppState('auth');
+    }
+  };
+
+  const openAuth = (mode) => {
+    setAuthMode(mode);
+    setAppState('auth');
   };
 
   const ensureAuth = (action) => {
@@ -413,8 +426,24 @@ export default function App() {
     );
   }
 
+  if (appState === 'landing') {
+    return (
+      <LandingPage
+        onLogin={() => openAuth('login')}
+        onRegister={() => openAuth('register')}
+        onDemo={handleDemoLogin}
+      />
+    );
+  }
+
   if (appState === 'auth') {
-    return <Login onLogin={handleLogin} onGuest={handleContinueAsGuest} />;
+    return (
+      <Login
+        onLogin={handleLogin}
+        onBack={() => setAppState('landing')}
+        initialMode={authMode}
+      />
+    );
   }
 
   return (
