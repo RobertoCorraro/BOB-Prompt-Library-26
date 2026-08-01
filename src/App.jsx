@@ -619,29 +619,61 @@ export default function App() {
           isOpen={compileModal.isOpen}
           onClose={() => setCompileModal({ ...compileModal, isOpen: false })}
           labelledBy="compile-title"
-          overlayClassName="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4"
-          panelClassName="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"
+          overlayClassName="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
+          panelClassName="bg-white dark:bg-slate-800 w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92dvh] sm:max-h-[85dvh] overflow-hidden"
         >
-            <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <h3 id="compile-title" className="text-xl font-bold">{compileModal.prompt.title}</h3>
-              <button onClick={() => setCompileModal({ ...compileModal, isOpen: false })}><X className="w-6 h-6 text-slate-400" /></button>
+            {/* Maniglia: segnala che è un pannello a comparsa, come nelle app native */}
+            <div className="sm:hidden shrink-0 flex justify-center pt-2.5 pb-1">
+              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
             </div>
-            <div className="p-6 space-y-4">
-              {compileModal.variables.map(v => (
-                <div key={v} className="space-y-1">
-                  <label className="text-sm font-bold">{v}</label>
-                  <input type="text" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2"
-                    onChange={(e) => setCompileModal({ ...compileModal, inputs: { ...compileModal.inputs, [v]: e.target.value } })} />
+
+            <div className="shrink-0 px-5 sm:px-6 py-3 sm:py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">Compila le variabili</p>
+                <h3 id="compile-title" className="text-base sm:text-xl font-bold truncate">{compileModal.prompt.title}</h3>
+              </div>
+              <button
+                onClick={() => setCompileModal({ ...compileModal, isOpen: false })}
+                className="shrink-0 p-2 -mr-2 rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                aria-label="Chiudi"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Corpo scorrevole: senza questo il contenuto eccedeva lo schermo e
+                il pulsante di conferma restava irraggiungibile da mobile.
+                overscroll-contain evita che lo scroll prosegua sulla pagina. */}
+            <div className="flex-1 overflow-y-auto overscroll-contain px-5 sm:px-6 py-4 space-y-4">
+              {compileModal.variables.map((v, idx) => (
+                <div key={v} className="space-y-1.5">
+                  <label htmlFor={`var-${v}`} className="block text-sm font-bold text-slate-700 dark:text-slate-200">
+                    <span className="font-mono text-violet-600 dark:text-violet-400">{`{{${v}}}`}</span>
+                  </label>
+                  <input
+                    id={`var-${v}`}
+                    type="text"
+                    autoComplete="off"
+                    autoFocus={idx === 0}
+                    enterKeyHint={idx === compileModal.variables.length - 1 ? 'done' : 'next'}
+                    placeholder={`Valore per ${v}`}
+                    value={compileModal.inputs[v] ?? ''}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all text-slate-900 dark:text-slate-100"
+                    onChange={(e) => setCompileModal({ ...compileModal, inputs: { ...compileModal.inputs, [v]: e.target.value } })}
+                  />
                 </div>
               ))}
-              <div className="bg-slate-900 rounded-xl p-4 mt-6">
-                <pre className="text-sm text-slate-300 whitespace-pre-wrap font-mono uppercase text-[10px] mb-2">Anteprima Risultante</pre>
-                <div className="text-slate-200 whitespace-pre-wrap">{handleCompile()}</div>
+
+              <div className="bg-slate-900 dark:bg-slate-950 rounded-xl p-4">
+                <p className="text-slate-400 font-mono uppercase text-[10px] tracking-widest mb-2">Anteprima risultante</p>
+                <div className="text-slate-200 whitespace-pre-wrap text-sm max-h-48 overflow-y-auto overscroll-contain">{handleCompile()}</div>
               </div>
             </div>
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t">
+
+            {/* Footer sempre visibile, con spazio per la home bar di iOS */}
+            <div className="shrink-0 px-5 sm:px-6 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700">
               <button onClick={() => { triggerHaptic('success'); navigator.clipboard.writeText(handleCompile()); setCompileModal({ ...compileModal, isOpen: false }); setToast({ show: true, message: 'Prompt compilato e copiato!', type: 'success' }); }}
-                className="w-full bg-violet-600 text-white font-bold py-3 rounded-xl">Copia &amp; Chiudi</button>
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-4 rounded-2xl transition-colors active:scale-[0.99]">Copia &amp; Chiudi</button>
             </div>
         </Modal>
       )}
