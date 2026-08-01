@@ -17,7 +17,18 @@ import AuthGuardModal from './components/AuthGuardModal';
 import BottomNav from './components/BottomNav';
 import VersionBadge from './components/VersionBadge';
 
-const normalizeRecord = (record) => ({ ...record, tags: normalizeTags(record.tags) });
+// prompts/prompt_revisions salvano category/type/tags come relation (ID) su
+// PocketBase, ma il resto dell'app ragiona per nomi (filtri, card, menu).
+// normalizeRecord converte ID → nome usando i dati espansi in lettura;
+// idFor fa il percorso inverso (nome → ID) prima di scrivere su PocketBase.
+const normalizeRecord = (record) => ({
+  ...record,
+  category: record.expand?.category?.name ?? record.category,
+  type: record.expand?.type?.name ?? record.type,
+  tags: normalizeTags(record.expand?.tags ?? record.tags),
+});
+
+const idFor = (name, list) => list.find((item) => item.name === name)?.id ?? name;
 
 // ─── Nomi collection PocketBase ──────────────────────────────────────────────
 const COLL = {
@@ -116,7 +127,7 @@ export default function App() {
       console.log(`[BOB] fetchData start — auth:${authFlag} sort:${sortField}`);
 
       const [promptsData, catData, typeData, tagData] = await Promise.all([
-        fetchCollection(COLL.prompts,    { sort: sortField }),
+        fetchCollection(COLL.prompts,    { sort: sortField, expand: 'category,type,tags' }),
         fetchCollection(COLL.categories, { sort: '+name' }),
         fetchCollection(COLL.types,      { sort: '+name' }),
         fetchCollection(COLL.tags,       { sort: '+name' }),
@@ -131,7 +142,7 @@ export default function App() {
 
       if (authFlag) {
         try {
-          const revData = await fetchCollection(COLL.revisions, { sort: '-created' });
+          const revData = await fetchCollection(COLL.revisions, { sort: '-created', expand: 'category,type,tags' });
           const grouped = (revData || []).reduce((acc, rev) => {
             const key = rev.prompt_id;
             if (!acc[key]) acc[key] = [];
@@ -249,15 +260,22 @@ export default function App() {
 
   const handleSave = async (formData, saveAsRevision = false) => {
     ensureAuth(async () => {
-      const newPrompt = { ...formData, tags: serializeTags(formData.tags || []) };
+      const newPrompt = {
+        ...formData,
+        category: idFor(formData.category, categories),
+        type: idFor(formData.type, types),
+        tags: serializeTags(formData.tags || []).map((name) => idFor(name, tags)),
+      };
       try {
         setIsSaving(true);
         if (modalInitialData) {
           if (saveAsRevision) {
             await pb.collection(COLL.revisions).create({
               prompt_id: modalInitialData.id, title: modalInitialData.title,
-              content: modalInitialData.content, category: modalInitialData.category,
-              type: modalInitialData.type, tags: serializeTags(modalInitialData.tags || []),
+              content: modalInitialData.content,
+              category: idFor(modalInitialData.category, categories),
+              type: idFor(modalInitialData.type, types),
+              tags: serializeTags(modalInitialData.tags || []).map((name) => idFor(name, tags)),
             });
           }
           await pb.collection(COLL.prompts).update(modalInitialData.id, newPrompt);
@@ -277,8 +295,15 @@ export default function App() {
     ensureAuth(async () => {
       try {
         setIsSaving(true);
-        const { id, created, updated, ...rest } = prompt;
-        await pb.collection(COLL.prompts).create({ ...rest, title: `Copia di ${prompt.title}`, tags: serializeTags(prompt.tags || []), is_favorite: false });
+        const { id, created, updated, expand, ...rest } = prompt;
+        await pb.collection(COLL.prompts).create({
+          ...rest,
+          title: `Copia di ${prompt.title}`,
+          category: idFor(prompt.category, categories),
+          type: idFor(prompt.type, types),
+          tags: serializeTags(prompt.tags || []).map((name) => idFor(name, tags)),
+          is_favorite: false,
+        });
         await fetchData(isAuthenticated);
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });
         triggerHaptic('success');
