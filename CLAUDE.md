@@ -27,6 +27,21 @@ messaggio conciso (**max 1000 caratteri**) da girare a Kodee invece di
 provare ad agire direttamente sulla VPS (nessun accesso SSH diretto in questa
 sessione).
 
+## Modello di accesso
+
+- **Libreria condivisa**: le API rule di `prompts`, `prompt_categ`,
+  `prompt_types`, `prompt_tags`, `prompt_revisions` richiedono solo
+  `@request.auth.id != ''`. Non esiste il concetto di proprietario:
+  ogni utente autenticato vede e può modificare/eliminare i contenuti
+  di tutti. Scelta voluta (strumento di team), da rivedere se servono
+  librerie separate per utente.
+- **Registrazione aperta** (`users.createRule` vuoto) e login senza
+  verifica email (`authRule` vuoto): serve perché l'SMTP non è attivo.
+- **Account demo**: `demo@frasi.info` / `demoBPL2026`, citato in chiaro
+  nella landing e quindi presente nel bundle pubblico. Ha gli stessi
+  permessi di scrittura di un utente normale: chiunque trovi le
+  credenziali può modificare la libreria condivisa.
+
 ## Da verificare / in sospeso
 
 - Comando suggerito da Vercel stesso: `npx plugins add vercel/vercel-plugin`
