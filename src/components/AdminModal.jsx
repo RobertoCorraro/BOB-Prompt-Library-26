@@ -129,7 +129,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                             <button
                                 onClick={() => setShowHistory(!showHistory)}
                                 className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium ${showHistory
-                                    ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400'
+                                    ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
                                     : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                                     }`}
                                 title="Storico Revisioni"
@@ -142,7 +142,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                         <button
                             onClick={() => setIsFullscreen(!isFullscreen)}
                             className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium ${isFullscreen
-                                ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400'
+                                ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
                                 : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                                 }`}
                             title={isFullscreen ? "Riduci" : "Schermo Intero"}
@@ -150,7 +150,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                         </button>
                     </div>
-                    <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 hover:bg-slate-200 rounded-full">
+                    <button onClick={handleClose} className="text-slate-500 hover:text-slate-600 transition-colors p-1 hover:bg-slate-200 rounded-full">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -168,7 +168,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                     required
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-500/20 outline-none transition-all text-base bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all text-base bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                                     placeholder="Es: Generatore di idee..."
                                 />
                             </div>
@@ -179,7 +179,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                     <select
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-500/20 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-slate-100"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-slate-100"
                                     >
                                         {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
@@ -189,7 +189,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                     <select
                                         value={formData.type}
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-500/20 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-slate-100"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-slate-100"
                                     >
                                         {types.map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
@@ -208,8 +208,8 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                                     type="button"
                                                     onClick={() => toggleTag(tag)}
                                                     className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all border ${isSelected
-                                                        ? 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800'
-                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-sky-200 hover:text-sky-600 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:border-sky-700 dark:hover:text-sky-400'
+                                                        ? 'bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-800'
+                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-violet-200 hover:text-violet-600 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:border-violet-700 dark:hover:text-violet-400'
                                                         }`}
                                                 >
                                                     {tag}
@@ -232,7 +232,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                 rows={isFullscreen ? undefined : 12} // Increased default height
                                 value={formData.content}
                                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                className={`w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-500/20 outline-none transition-all resize-y font-mono text-base leading-relaxed bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${isFullscreen ? 'flex-1 resize-none p-4 text-base' : ''
+                                className={`w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all resize-y font-mono text-base leading-relaxed bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 ${isFullscreen ? 'flex-1 resize-none p-4 text-base' : ''
                                     }`}
                                 placeholder="Inserisci qui il prompt..."
                             />
@@ -240,7 +240,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                 <button
                                     type="button"
                                     onClick={insertVariablePlaceholder}
-                                    className="text-xs flex items-center gap-1.5 text-slate-500 hover:text-sky-600 hover:bg-sky-50 px-2 py-1 rounded-md transition-all border border-transparent hover:border-sky-100"
+                                    className="text-xs flex items-center gap-1.5 text-slate-500 hover:text-violet-600 hover:bg-violet-50 px-2 py-1 rounded-md transition-all border border-transparent hover:border-violet-100"
                                     title="Inserisci segnaposto variabile"
                                 >
                                     <Braces className="w-3.5 h-3.5" />
@@ -258,7 +258,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                 <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
                                     <History className="w-4 h-4" /> Storico Revisioni
                                 </h3>
-                                <button onClick={() => setShowHistory(false)} className="text-slate-400 hover:text-slate-600">
+                                <button onClick={() => setShowHistory(false)} className="text-slate-500 hover:text-slate-600">
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
@@ -276,7 +276,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                                                 </div>
                                                 <button
                                                     onClick={() => handleRestore(rev)}
-                                                    className="text-sky-600 hover:text-sky-800 text-xs font-medium flex items-center gap-1"
+                                                    className="text-violet-600 hover:text-violet-800 text-xs font-medium flex items-center gap-1"
                                                 >
                                                     <RotateCcw className="w-3 h-3" /> Ripristina
                                                 </button>
@@ -323,7 +323,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
                             <button
                                 type="button"
                                 onClick={handleSaveRevision}
-                                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded-lg transition-all text-sm font-medium"
+                                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-lg transition-all text-sm font-medium"
                                 title="Salva modifiche e archivia versione precedente"
                             >
                                 <History className="w-4 h-4" />
@@ -333,7 +333,7 @@ export default function AdminModal({ isOpen, onClose, onSave, onDelete, initialD
 
                         <button
                             onClick={handleSubmit}
-                            className="flex items-center gap-2 px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg shadow-md shadow-sky-200 dark:shadow-none transition-all transform active:scale-95 text-sm font-medium"
+                            className="flex items-center gap-2 px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg shadow-md shadow-violet-200 dark:shadow-none transition-all transform active:scale-95 text-sm font-medium"
                         >
                             <Save className="w-4 h-4" />
                             Salva

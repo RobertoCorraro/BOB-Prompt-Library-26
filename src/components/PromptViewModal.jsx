@@ -68,7 +68,7 @@ export default function PromptViewModal({
                 <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/20">
                     <div className="flex-1 min-w-0 mr-4">
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/30 px-2 py-0.5 rounded">
                                 {prompt.category}
                             </span>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
@@ -79,7 +79,7 @@ export default function PromptViewModal({
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 hover:text-slate-600 dark:hover:text-slate-200"
                     >
                         <X className="w-6 h-6" />
                     </button>
@@ -93,7 +93,7 @@ export default function PromptViewModal({
                             <label className="text-xs font-bold uppercase tracking-widest text-slate-400">Contenuto del Prompt</label>
                             <button
                                 onClick={handleCopy}
-                                className="text-sky-600 dark:text-sky-400 text-xs font-bold flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                                className="text-violet-600 dark:text-violet-400 text-xs font-bold flex items-center gap-1.5 hover:opacity-80 transition-opacity"
                             >
                                 <Copy className="w-3.5 h-3.5" /> COPIA TESTO
                             </button>
@@ -161,7 +161,7 @@ export default function PromptViewModal({
 
                         <button
                             onClick={() => { onClose(); onCompile(prompt); }}
-                            className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-3.5 px-4 rounded-2xl transition-all shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 active:scale-95"
+                            className="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3.5 px-4 rounded-2xl transition-all shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2 active:scale-95"
                         >
                             <Zap className="w-5 h-5 fill-current" />
                             <span>Usa</span>
@@ -174,7 +174,7 @@ export default function PromptViewModal({
                             onClick={handleToggleFavorite}
                             className={`flex items-center justify-center gap-2 py-3 px-3 rounded-xl border text-xs font-bold transition-all active:scale-95 ${prompt.is_favorite
                                 ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-500'
-                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
                                 }`}
                         >
                             <Star className={`w-4 h-4 ${prompt.is_favorite ? 'fill-current' : ''}`} />
@@ -183,7 +183,7 @@ export default function PromptViewModal({
 
                         <button
                             onClick={handleEdit}
-                            className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold transition-all active:scale-95"
+                            className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold transition-all active:scale-95"
                         >
                             <Edit2 className="w-4 h-4" />
                             <span>Modifica</span>
@@ -192,7 +192,7 @@ export default function PromptViewModal({
                         {onDuplicate && (
                             <button
                                 onClick={handleDuplicate}
-                                className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold transition-all active:scale-95"
+                                className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold transition-all active:scale-95"
                             >
                                 <CopyPlus className="w-4 h-4" />
                                 <span>Duplica</span>

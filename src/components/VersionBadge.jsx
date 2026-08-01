@@ -17,11 +17,11 @@ function formatDate(iso) {
 export default function VersionBadge({ className = '' }) {
   const date = formatDate(BUILD_DATE);
   return (
-    <div className={`flex items-center justify-center gap-1.5 text-slate-400 dark:text-slate-600 select-none ${className}`}>
+    <div className={`flex items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400 select-none ${className}`}>
       <span className="font-mono text-[10px] font-bold tracking-widest uppercase">BOB v{VERSION}</span>
       {date && (
         <>
-          <span className="text-slate-300 dark:text-slate-700">&middot;</span>
+          <span className="text-slate-400 dark:text-slate-600">&middot;</span>
           <span className="text-[10px]">build {date}</span>
         </>
       )}

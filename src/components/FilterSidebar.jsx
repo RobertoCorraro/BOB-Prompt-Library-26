@@ -64,7 +64,7 @@ export default function FilterSidebar({
                 {/* Header */}
                 <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950 sticky top-0 z-10">
                     <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-sky-50 dark:bg-sky-900/30 rounded-xl text-sky-600 dark:text-sky-400 shadow-sm shadow-sky-100 dark:shadow-none">
+                        <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-xl text-violet-600 dark:text-violet-400 shadow-sm shadow-violet-100 dark:shadow-none">
                             <SlidersHorizontal className="w-5 h-5" />
                         </div>
                         <div>
@@ -77,7 +77,7 @@ export default function FilterSidebar({
                             triggerHaptic('light');
                             onClose();
                         }}
-                        className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
+                        className="p-2 text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -89,7 +89,7 @@ export default function FilterSidebar({
                     {/* Section: Favorites Quick Access */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                 <Heart className="w-3.5 h-3.5" />
                                 Preferiti
                             </h3>
@@ -114,7 +114,7 @@ export default function FilterSidebar({
 
                     {/* Section: Categories */}
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                             <FolderTree className="w-3.5 h-3.5" />
                             Categorie
                         </h3>
@@ -130,12 +130,12 @@ export default function FilterSidebar({
                                             onSelectCategory(cat.name);
                                         }}
                                         className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all text-sm font-medium ${isSelected
-                                            ? 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 ring-1 ring-sky-200 dark:ring-sky-900/50'
-                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-200'
+                                            ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-900/50'
+                                            : 'text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-200'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                                            <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-violet-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
                                             <span>{cat.name}</span>
                                         </div>
                                     </button>
@@ -146,7 +146,7 @@ export default function FilterSidebar({
 
                     {/* Section: Type Filter */}
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                             <Type className="w-3.5 h-3.5" />
                             Tipologie
                         </h3>
@@ -157,11 +157,11 @@ export default function FilterSidebar({
                                     onSelectType('Tutti');
                                 }}
                                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium ${activeType === 'Tutti'
-                                    ? 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 font-bold'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900'
+                                    ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-bold'
+                                    : 'text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900'
                                     }`}
                             >
-                                <span className={`w-2 h-2 rounded-full ${activeType === 'Tutti' ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                                <span className={`w-2 h-2 rounded-full ${activeType === 'Tutti' ? 'bg-violet-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
                                 Tutti i Tipi
                             </button>
                             {types.map(type => {
@@ -176,7 +176,7 @@ export default function FilterSidebar({
                                         }}
                                         className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium ${isSelected
                                             ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm font-bold border border-slate-200 dark:border-slate-700'
-                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900'
+                                            : 'text-slate-600 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900'
                                             }`}
                                     >
                                         <div className={`w-2 h-2 rounded-full border ${color.bg} ${color.border}`} />
@@ -189,7 +189,7 @@ export default function FilterSidebar({
 
                     {/* Section: Tag Filter */}
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                             <Tag className="w-3.5 h-3.5" />
                             Tag
                         </h3>
@@ -204,8 +204,8 @@ export default function FilterSidebar({
                                             key={tag.id || tag.name}
                                             onClick={() => toggleTagFilter(tag.name)}
                                             className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all border-2 ${isSelected
-                                                ? 'bg-sky-600 text-white border-sky-600 shadow-lg shadow-sky-200 dark:shadow-none scale-105'
-                                                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800 hover:border-sky-300 dark:hover:border-sky-700'
+                                                ? 'bg-violet-600 text-white border-violet-600 shadow-lg shadow-violet-200 dark:shadow-none scale-105'
+                                                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-700'
                                                 }`}
                                         >
                                             {tag.name}
@@ -224,7 +224,7 @@ export default function FilterSidebar({
                             triggerHaptic('warning');
                             onResetFilters();
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-900 dark:bg-sky-600 hover:bg-slate-800 dark:hover:bg-sky-700 text-white rounded-2xl font-bold text-sm shadow-xl shadow-slate-200 dark:shadow-none transition-all active:scale-95 group mb-4"
+                        className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-900 dark:bg-violet-600 hover:bg-slate-800 dark:hover:bg-violet-700 text-white rounded-2xl font-bold text-sm shadow-xl shadow-slate-200 dark:shadow-none transition-all active:scale-95 group mb-4"
                     >
                         <RotateCcw className="w-4 h-4 group-hover:rotate-[-45deg] transition-transform" />
                         Resetta Tutti i Filtri
@@ -234,7 +234,7 @@ export default function FilterSidebar({
                         <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800">
                             <button
                                 onClick={() => onOpenSettings('categories')}
-                                className="p-2 text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
+                                className="p-2 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
                                 title="Gestisci Tassonomie"
                             >
                                 <Settings className="w-5 h-5" />

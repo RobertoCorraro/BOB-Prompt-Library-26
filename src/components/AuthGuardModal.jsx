@@ -40,7 +40,7 @@ export default function AuthGuardModal({ isOpen, onClose, onLogin }) {
 
                     <button
                         onClick={handleLoginClick}
-                        className="w-full flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-sky-200 dark:shadow-none transition-all active:scale-[0.98] mb-3"
+                        className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-violet-200 dark:shadow-none transition-all active:scale-[0.98] mb-3"
                     >
                         <LogIn className="w-5 h-5" />
                         <span>ACCEDI</span>

@@ -73,7 +73,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                     <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
                         {editingItem ? `Modifica ${title.slice(0, -1)}` : `Gestisci ${title}`}
                     </h2>
-                    <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 hover:bg-slate-200 rounded-full">
+                    <button onClick={handleClose} className="text-slate-500 hover:text-slate-600 transition-colors p-1 hover:bg-slate-200 rounded-full">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -86,12 +86,12 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                 value={newItemName}
                                 onChange={(e) => setNewItemName(e.target.value)}
                                 placeholder={editingItem ? "Modifica nome..." : `Nuova ${title.slice(0, -1)}...`}
-                                className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 dark:focus:ring-sky-500/20 outline-none transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-base"
+                                className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-500/20 outline-none transition-all bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-base"
                             />
                             <button
                                 type="submit"
                                 disabled={!newItemName.trim() || isLoading}
-                                className={`text-white p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${editingItem ? 'bg-sky-600 hover:bg-sky-700' : 'bg-sky-600 hover:bg-sky-700'
+                                className={`text-white p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${editingItem ? 'bg-violet-600 hover:bg-violet-700' : 'bg-violet-600 hover:bg-violet-700'
                                     }`}
                                 title={editingItem ? "Salva Modifiche" : "Aggiungi"}
                             >
@@ -139,7 +139,7 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
 
                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                         {items.length === 0 ? (
-                            <p className="text-center text-slate-400 dark:text-slate-500 text-sm py-4">Nessun elemento presente.</p>
+                            <p className="text-center text-slate-500 dark:text-slate-400 text-sm py-4">Nessun elemento presente.</p>
                         ) : (
                             items.map((item) => {
                                 // Fallback to default color if item has no color property (backward compatibility)
@@ -155,13 +155,13 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                     <div
                                         key={item.id || item.name}
                                         className={`flex items-center justify-between p-3 rounded-lg group transition-all border ${isEditingThis
-                                            ? 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800 shadow-sm'
-                                            : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:shadow-sm hover:border-sky-100 dark:hover:border-slate-600'
+                                            ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800 shadow-sm'
+                                            : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:shadow-sm hover:border-violet-100 dark:hover:border-slate-600'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className={`w-4 h-4 rounded-full ${colorObj.bg} border ${colorObj.border}`} />
-                                            <span className={`font-medium ${isEditingThis ? 'text-sky-700 dark:text-sky-300' : 'text-slate-700 dark:text-slate-200'}`}>
+                                            <span className={`font-medium ${isEditingThis ? 'text-violet-700 dark:text-violet-300' : 'text-slate-700 dark:text-slate-200'}`}>
                                                 {item.name || item}
                                             </span>
                                         </div>
@@ -169,14 +169,14 @@ export default function SettingsModal({ isOpen, onClose, title, items, onAddItem
                                         <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => startEditing(item)}
-                                                className="text-slate-400 hover:text-sky-600 hover:bg-sky-50 p-1.5 rounded-md transition-colors"
+                                                className="text-slate-500 hover:text-violet-600 hover:bg-violet-50 p-1.5 rounded-md transition-colors"
                                                 title="Modifica"
                                             >
                                                 <Pencil className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(item.id || item)}
-                                                className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                                                className="text-slate-500 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors"
                                                 title="Elimina"
                                             >
                                                 <Trash2 className="w-4 h-4" />

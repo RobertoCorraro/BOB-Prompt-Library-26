@@ -442,7 +442,7 @@ export default function App() {
   if (appState === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900">
-        <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
       </div>
     );
   }
@@ -482,7 +482,7 @@ export default function App() {
       />
 
       {isSaving && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-sky-600 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg animate-pulse">
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-violet-600 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg animate-pulse">
           <Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Salvataggio...</span>
         </div>
       )}
@@ -533,8 +533,8 @@ export default function App() {
                 </button>
               </div>
               <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                <button onClick={() => { triggerHaptic('light'); setViewMode('grid'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid className="w-4.5 h-4.5" /></button>
-                <button onClick={() => { triggerHaptic('light'); setViewMode('list'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-sky-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><List className="w-4.5 h-4.5" /></button>
+                <button onClick={() => { triggerHaptic('light'); setViewMode('grid'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-violet-600 shadow-sm' : 'text-slate-500 hover:text-slate-600'}`}><LayoutGrid className="w-4.5 h-4.5" /></button>
+                <button onClick={() => { triggerHaptic('light'); setViewMode('list'); }} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-violet-600 shadow-sm' : 'text-slate-500 hover:text-slate-600'}`}><List className="w-4.5 h-4.5" /></button>
               </div>
             </div>
           </div>
@@ -569,7 +569,7 @@ export default function App() {
 
       {isAuthenticated && (
         <button onClick={() => { setModalInitialData(null); setIsModalOpen(true); }}
-          className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-sky-600 hover:bg-sky-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95">
+          className="hidden sm:flex fixed bottom-6 right-6 w-14 h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg items-center justify-center z-40 transition-transform active:scale-95">
           <Plus className="w-7 h-7" />
         </button>
       )}
@@ -628,7 +628,7 @@ export default function App() {
             </div>
             <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t">
               <button onClick={() => { triggerHaptic('success'); navigator.clipboard.writeText(handleCompile()); setCompileModal({ ...compileModal, isOpen: false }); setToast({ show: true, message: 'Prompt compilato e copiato!', type: 'success' }); }}
-                className="w-full bg-sky-600 text-white font-bold py-3 rounded-xl">Copia &amp; Chiudi</button>
+                className="w-full bg-violet-600 text-white font-bold py-3 rounded-xl">Copia &amp; Chiudi</button>
             </div>
           </div>
         </div>

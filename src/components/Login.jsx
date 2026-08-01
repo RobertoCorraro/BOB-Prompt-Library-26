@@ -151,10 +151,10 @@ export default function Login({ onLogin, onClose, onBack, initialMode = 'login' 
 
                 {/* Logo and Title */}
                 <div className="text-center mb-8 animate-in fade-in slide-in-from-top duration-700">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-sky-600 to-blue-600 rounded-2xl shadow-xl mb-4 transform hover:scale-105 transition-transform duration-300">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl shadow-xl mb-4 transform hover:scale-105 transition-transform duration-300">
                         <BookOpen className="w-10 h-10 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
                         {titles[mode].h}
                     </h1>
                     <p className="text-slate-600 text-sm">{titles[mode].p}</p>
@@ -173,10 +173,10 @@ export default function Login({ onLogin, onClose, onBack, initialMode = 'login' 
                             <SubmitButton isLoading={isLoading} disabled={connectionStatus !== 'connected'} loadingLabel="Accesso in corso..." label="Accedi" icon={Lock} />
 
                             <div className="flex items-center justify-between text-sm pt-1">
-                                <button type="button" onClick={() => switchMode('reset')} className="text-slate-500 hover:text-sky-600 transition-colors">
+                                <button type="button" onClick={() => switchMode('reset')} className="text-slate-500 hover:text-violet-600 transition-colors">
                                     Password dimenticata?
                                 </button>
-                                <button type="button" onClick={() => switchMode('register')} className="text-sky-600 font-medium hover:text-sky-700 transition-colors">
+                                <button type="button" onClick={() => switchMode('register')} className="text-violet-600 font-medium hover:text-violet-700 transition-colors">
                                     Registrati
                                 </button>
                             </div>
@@ -192,11 +192,11 @@ export default function Login({ onLogin, onClose, onBack, initialMode = 'login' 
                                     <div>
                                         <p className="font-bold text-slate-800">Account già esistente</p>
                                         <p className="text-sm text-slate-600 mt-1">
-                                            L'email <span className="font-mono font-semibold text-sky-700">{form.email}</span> è già registrata.
+                                            L'email <span className="font-mono font-semibold text-violet-700">{form.email}</span> è già registrata.
                                         </p>
                                     </div>
                                 </div>
-                                <button onClick={() => switchMode('login')} className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-all">
+                                <button onClick={() => switchMode('login')} className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl shadow-md transition-all">
                                     Vai al Login
                                 </button>
                             </div>
@@ -211,7 +211,7 @@ export default function Login({ onLogin, onClose, onBack, initialMode = 'login' 
 
                                 <SubmitButton isLoading={isLoading} disabled={connectionStatus !== 'connected'} loadingLabel="Creazione account..." label="Crea account" icon={User} />
 
-                                <button type="button" onClick={() => switchMode('login')} className="w-full text-sm text-slate-500 hover:text-sky-600 transition-colors">
+                                <button type="button" onClick={() => switchMode('login')} className="w-full text-sm text-slate-500 hover:text-violet-600 transition-colors">
                                     Hai già un account? Accedi
                                 </button>
                             </form>
@@ -244,7 +244,7 @@ export default function Login({ onLogin, onClose, onBack, initialMode = 'login' 
                                         </div>
                                     </>
                                 )}
-                                <button onClick={() => switchMode('login')} className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-all">
+                                <button onClick={() => switchMode('login')} className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl shadow-md transition-all">
                                     Torna al Login
                                 </button>
                             </div>
@@ -256,7 +256,7 @@ export default function Login({ onLogin, onClose, onBack, initialMode = 'login' 
 
                                 <SubmitButton isLoading={isLoading} disabled={connectionStatus !== 'connected'} loadingLabel="Invio in corso..." label="Invia link di reset" icon={Mail} />
 
-                                <button type="button" onClick={() => switchMode('login')} className="w-full text-sm text-slate-500 hover:text-sky-600 transition-colors">
+                                <button type="button" onClick={() => switchMode('login')} className="w-full text-sm text-slate-500 hover:text-violet-600 transition-colors">
                                     Torna al Login
                                 </button>
                             </form>
@@ -318,7 +318,7 @@ function Field({ icon: Icon, label, name, type, value, onChange, placeholder, au
                     type={type}
                     value={value}
                     onChange={onChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all bg-white dark:bg-slate-800 text-base text-slate-900 dark:text-white"
                     placeholder={placeholder}
                     required={required}
                     autoFocus={autoFocus}
@@ -342,7 +342,7 @@ function SubmitButton({ isLoading, disabled, loadingLabel, label, icon: Icon }) 
         <button
             type="submit"
             disabled={isLoading || disabled}
-            className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
             {isLoading ? (
                 <>
