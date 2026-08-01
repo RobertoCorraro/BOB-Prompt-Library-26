@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Lock, User, Mail, AlertCircle, CheckCircle, Eye, X } from 'lucide-react';
-import { pb, isPocketBaseConfigured } from '../lib/pocketbase';
+import { pb, isPocketBaseConfigured, isSmtpConfigured } from '../lib/pocketbase';
 
 export default function Login({ onLogin, onClose, onGuest }) {
     const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset'
@@ -213,12 +213,28 @@ export default function Login({ onLogin, onClose, onGuest }) {
                     {mode === 'reset' && (
                         resetSent ? (
                             <div className="text-center space-y-5">
-                                <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full">
-                                    <CheckCircle className="w-10 h-10 text-emerald-600" />
-                                </div>
-                                <p className="text-slate-600 text-sm">
-                                    Se l'indirizzo <span className="font-mono font-semibold">{form.email}</span> è registrato, riceverai a breve un'email con le istruzioni per reimpostare la password.
-                                </p>
+                                {isSmtpConfigured ? (
+                                    <>
+                                        <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full">
+                                            <CheckCircle className="w-10 h-10 text-emerald-600" />
+                                        </div>
+                                        <p className="text-slate-600 text-sm">
+                                            Se l'indirizzo <span className="font-mono font-semibold">{form.email}</span> è registrato, riceverai a breve un'email con le istruzioni per reimpostare la password.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full">
+                                            <AlertCircle className="w-10 h-10 text-amber-600" />
+                                        </div>
+                                        <div className="text-left bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                            <p className="font-bold text-slate-800 text-sm">Invio email non ancora attivo</p>
+                                            <p className="text-slate-600 text-sm mt-1.5">
+                                                Questo servizio non ha ancora un provider email (SMTP) configurato, quindi nessuna email verrà effettivamente inviata. Chiedi a chi amministra l'app di configurare l'SMTP su PocketBase, oppure di reimpostarti la password manualmente dal pannello admin.
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
                                 <button onClick={() => switchMode('login')} className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-all">
                                     Torna al Login
                                 </button>

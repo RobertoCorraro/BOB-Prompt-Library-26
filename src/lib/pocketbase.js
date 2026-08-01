@@ -4,6 +4,11 @@ const pocketbaseUrl = import.meta.env.VITE_POCKETBASE_URL
 
 export const isPocketBaseConfigured = Boolean(pocketbaseUrl)
 
+// Nessuna API pubblica di PocketBase espone lo stato SMTP: questo flag va
+// impostato a mano (VITE_SMTP_CONFIGURED=true) quando viene attivato un
+// provider email reale sull'istanza PocketBase.
+export const isSmtpConfigured = import.meta.env.VITE_SMTP_CONFIGURED === 'true'
+
 // ─ Diagnostic log ───────────────────────────────────────────────
 console.group('🔧 PocketBase Init')
 console.log('VITE_POCKETBASE_URL:', pocketbaseUrl || '❌ NON DEFINITA')
