@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star, Braces, Zap, Type, Trash2, Eye, CopyPlus, User } from 'lucide-react';
+import { Copy, ChevronDown, ChevronUp, ChevronRight, Tag, Calendar, RefreshCw, Edit2, Star, Braces, Zap, Type, Trash2, Eye, CopyPlus, User } from 'lucide-react';
 import { DEFAULT_COLOR } from '../lib/constants';
 import { extractVariables, triggerHaptic, formatDate } from '../lib/utils';
 
@@ -96,17 +96,19 @@ export default function PromptCard({
                 ? 'border-green-500 shadow-green-200 dark:border-green-500/50 dark:shadow-green-900/20'
                 : 'border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-600'
                 }`}>
-                <div onClick={handleView} className="flex-1 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center min-w-0">
-                    <div className="flex flex-col gap-1 overflow-hidden">
-                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm sm:text-base truncate">{prompt.title}</h3>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                <div onClick={handleView} className="flex-1 min-w-0 py-3 px-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center gap-2">
+                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-[15px] sm:text-base leading-snug line-clamp-2 sm:truncate">{prompt.title}</h3>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 min-w-0">
                             <span className="truncate">{prompt.category}</span>
-                            <span>•</span>
+                            <span className="shrink-0">•</span>
                             <span className="truncate">{prompt.type}</span>
+                            {/* L'autore è informazione secondaria: su mobile lo spazio
+                                serve al titolo, quindi compare solo da sm in su. */}
                             {prompt.owner_name && (
                                 <>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-1 truncate">
+                                    <span className="hidden sm:inline shrink-0">•</span>
+                                    <span className="hidden sm:flex items-center gap-1 truncate">
                                         <User className="w-2.5 h-2.5 shrink-0" />
                                         {prompt.owner_name}
                                     </span>
@@ -114,15 +116,21 @@ export default function PromptCard({
                             )}
                         </div>
                     </div>
+                    {/* Indica che la riga è toccabile: su mobile le altre azioni
+                        stanno tutte nel dettaglio che si apre da qui. */}
+                    <ChevronRight className="sm:hidden w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500" />
                 </div>
                 <div className="flex items-stretch border-l border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/50">
-                    <button onClick={handleView} className="w-12 sm:w-16 flex items-center justify-center text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 transition-all active:scale-95" title="Visualizza"><Eye className="w-5 h-5" /></button>
-                    <button onClick={handleCopy} className={`w-12 sm:w-16 flex items-center justify-center transition-all active:scale-95 ${isCopied ? 'text-green-600 dark:text-green-400' : 'text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'}`} title="Copia">
+                    {/* Su mobile resta solo "Copia": è l'azione per cui si apre
+                        l'app al volo. Il resto è a un tocco di distanza nel
+                        dettaglio, e il titolo si riprende lo spazio. */}
+                    <button onClick={handleView} className="hidden sm:flex w-16 items-center justify-center text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 transition-all active:scale-95" title="Visualizza"><Eye className="w-5 h-5" /></button>
+                    <button onClick={handleCopy} className={`w-14 sm:w-16 flex items-center justify-center transition-all active:scale-95 ${isCopied ? 'text-green-600 dark:text-green-400' : 'text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'}`} title="Copia" aria-label={`Copia "${prompt.title}"`}>
                         {isCopied ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Copy className="w-5 h-5" />}
                     </button>
-                    <button onClick={handleEdit} className="w-12 sm:w-16 flex items-center justify-center text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-all active:scale-95" title="Modifica"><Edit2 className="w-5 h-5" /></button>
-                    {onDuplicate && <button onClick={handleDuplicate} className="w-12 sm:w-16 flex items-center justify-center text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all active:scale-95" title="Duplica"><CopyPlus className="w-5 h-5" /></button>}
-                    <button onClick={handleDelete} className="w-12 sm:w-16 flex items-center justify-center text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-95" title="Elimina"><Trash2 className="w-5 h-5" /></button>
+                    <button onClick={handleEdit} className="hidden sm:flex w-16 items-center justify-center text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-all active:scale-95" title="Modifica"><Edit2 className="w-5 h-5" /></button>
+                    {onDuplicate && <button onClick={handleDuplicate} className="hidden sm:flex w-16 items-center justify-center text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all active:scale-95" title="Duplica"><CopyPlus className="w-5 h-5" /></button>}
+                    <button onClick={handleDelete} className="hidden sm:flex w-16 items-center justify-center text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-95" title="Elimina"><Trash2 className="w-5 h-5" /></button>
                 </div>
             </div>
         );
