@@ -22,11 +22,23 @@ import VersionBadge from './components/VersionBadge';
 // PocketBase, ma il resto dell'app ragiona per nomi (filtri, card, menu).
 // normalizeRecord converte ID → nome usando i dati espansi in lettura;
 // idFor fa il percorso inverso (nome → ID) prima di scrivere su PocketBase.
+// Etichetta leggibile del creatore: nome se presente, altrimenti la parte
+// locale dell'email (visibile solo se l'utente ha emailVisibility attivo).
+// Restituisce '' quando il prompt non ha owner (record creati prima che il
+// campo esistesse) così la UI può semplicemente non mostrare nulla.
+const ownerLabel = (owner) => {
+  if (!owner) return '';
+  if (owner.name) return owner.name;
+  if (owner.email) return owner.email.split('@')[0];
+  return '';
+};
+
 const normalizeRecord = (record) => ({
   ...record,
   category: record.expand?.category?.name ?? record.category,
   type: record.expand?.type?.name ?? record.type,
   tags: normalizeTags(record.expand?.tags ?? record.tags),
+  owner_name: ownerLabel(record.expand?.owner),
 });
 
 const idFor = (name, list) => list.find((item) => item.name === name)?.id ?? name;
@@ -129,7 +141,7 @@ export default function App() {
       console.log(`[BOB] fetchData start — auth:${authFlag} sort:${sortField}`);
 
       const [promptsData, catData, typeData, tagData] = await Promise.all([
-        fetchCollection(COLL.prompts,    { sort: sortField, expand: 'category,type,tags' }),
+        fetchCollection(COLL.prompts,    { sort: sortField, expand: 'category,type,tags,owner' }),
         fetchCollection(COLL.categories, { sort: '+name' }),
         fetchCollection(COLL.types,      { sort: '+name' }),
         fetchCollection(COLL.tags,       { sort: '+name' }),
@@ -273,8 +285,11 @@ export default function App() {
 
   const handleSave = async (formData, saveAsRevision = false) => {
     ensureAuth(async () => {
+      // Payload esplicito: formData porta con sé campi di sola lettura
+      // (expand, owner_name, created…) che non appartengono allo schema.
       const newPrompt = {
-        ...formData,
+        title: formData.title,
+        content: formData.content,
         category: idFor(formData.category, categories),
         type: idFor(formData.type, types),
         tags: serializeTags(formData.tags || []).map((name) => idFor(name, tags)),
@@ -291,10 +306,15 @@ export default function App() {
               tags: serializeTags(modalInitialData.tags || []).map((name) => idFor(name, tags)),
             });
           }
+          // owner non viene toccato in modifica: resta chi ha creato il prompt.
           await pb.collection(COLL.prompts).update(modalInitialData.id, newPrompt);
           setToast({ show: true, message: saveAsRevision ? 'Revisione salvata!' : 'Prompt aggiornato!', type: 'success' });
         } else {
-          await pb.collection(COLL.prompts).create({ ...newPrompt, is_favorite: false });
+          await pb.collection(COLL.prompts).create({
+            ...newPrompt,
+            is_favorite: false,
+            owner: pb.authStore.model?.id,
+          });
           setToast({ show: true, message: 'Nuovo prompt salvato!', type: 'success' });
         }
         await fetchData(isAuthenticated);
@@ -308,14 +328,15 @@ export default function App() {
     ensureAuth(async () => {
       try {
         setIsSaving(true);
-        const { id, created, updated, expand, ...rest } = prompt;
+        // La copia appartiene a chi la crea, non all'autore dell'originale.
         await pb.collection(COLL.prompts).create({
-          ...rest,
           title: `Copia di ${prompt.title}`,
+          content: prompt.content,
           category: idFor(prompt.category, categories),
           type: idFor(prompt.type, types),
           tags: serializeTags(prompt.tags || []).map((name) => idFor(name, tags)),
           is_favorite: false,
+          owner: pb.authStore.model?.id,
         });
         await fetchData(isAuthenticated);
         setToast({ show: true, message: `"${prompt.title}" duplicato!`, type: 'success' });

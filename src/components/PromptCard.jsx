@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star, Braces, Zap, Type, Trash2, Eye, CopyPlus } from 'lucide-react';
+import { Copy, ChevronDown, ChevronUp, Tag, Calendar, RefreshCw, Edit2, Star, Braces, Zap, Type, Trash2, Eye, CopyPlus, User } from 'lucide-react';
 import { DEFAULT_COLOR } from '../lib/constants';
 import { extractVariables, triggerHaptic, formatDate } from '../lib/utils';
 
@@ -103,6 +103,15 @@ export default function PromptCard({
                             <span className="truncate">{prompt.category}</span>
                             <span>•</span>
                             <span className="truncate">{prompt.type}</span>
+                            {prompt.owner_name && (
+                                <>
+                                    <span>•</span>
+                                    <span className="flex items-center gap-1 truncate">
+                                        <User className="w-2.5 h-2.5 shrink-0" />
+                                        {prompt.owner_name}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -168,17 +177,23 @@ export default function PromptCard({
                             </div>
                         </div>
                     )}
-                    {formatDate(prompt.created) && (
-                        <div className="ml-auto flex items-center gap-1 text-slate-400 dark:text-slate-500">
-                            <Calendar className="w-3 h-3" />
-                            <span title={formatDate(prompt.created, { timeZone: 'Europe/Rome', dateStyle: 'long', timeStyle: 'short' })}>
+                    <div className="ml-auto flex items-center gap-2.5 text-slate-400 dark:text-slate-500">
+                        {prompt.owner_name && (
+                            <span className="flex items-center gap-1" title={`Creato da ${prompt.owner_name}`}>
+                                <User className="w-3 h-3" />
+                                <span className="max-w-[90px] truncate">{prompt.owner_name}</span>
+                            </span>
+                        )}
+                        {formatDate(prompt.created) && (
+                            <span className="flex items-center gap-1" title={formatDate(prompt.created, { timeZone: 'Europe/Rome', dateStyle: 'long', timeStyle: 'short' })}>
+                                <Calendar className="w-3 h-3" />
                                 {formatDate(prompt.created, {
                                     timeZone: 'Europe/Rome',
                                     day: '2-digit', month: '2-digit', year: 'numeric'
                                 })}
                             </span>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
 
