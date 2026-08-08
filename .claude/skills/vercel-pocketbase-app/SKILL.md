@@ -66,9 +66,22 @@ pronti per chi amministra la VPS — sta in `references/setup.md`. In sintesi:
    rete Docker di Traefik, stesso `certresolver`, e soprattutto un `Host()` con il
    dominio vero — un segnaposto lasciato lì non corrisponde a nulla e produce un
    404 che sembra un guasto del server.
-3. Superuser, collection e regole (vedi `references/pocketbase.md`).
+3. Superuser, poi lo schema da una specifica JSON:
+
+   ```bash
+   python3 scripts/pb_schema.py apply schema.spec.json \
+     --url https://pb.dominio.it --email admin@dominio.it --password '...'
+   ```
+
+   Crea collection, campi e regole occupandosi da solo dei dettagli che altrimenti
+   si sbagliano: campi autodate, `maxSelect` sulle relazioni multiple, ordine di
+   creazione. È idempotente, quindi la specifica si tiene nel repo e si evolve col
+   codice. Formato e scorciatoie per le regole in `references/dati.md`.
 4. Progetto Vercel collegato al repo GitHub, variabili d'ambiente impostate lì.
-5. Collaudo con gli script qui sotto **prima** di dire che è pronto.
+5. Schermate CRUD e di autenticazione seguendo `references/crud-ui.md`.
+6. Collaudo con gli script qui sotto **prima** di dire che è pronto.
+7. `pb_schema.py dump` committato nel repo: è l'unica copia dello schema fuori dal
+   volume Docker.
 
 ## Collaudo
 
@@ -135,6 +148,10 @@ Leggi la pagina pertinente appena tocchi quell'area, non solo quando sei bloccat
 
 - `references/setup.md` — scaffolding, compose Traefik commentato, Vercel, DNS,
   messaggi pronti per l'amministratore della VPS.
+- `references/dati.md` — creare lo schema da una specifica, versionarlo, backup
+  dei dati. Leggila **prima** di toccare uno schema in produzione.
+- `references/crud-ui.md` — impalcatura delle schermate: caricamento con `expand`,
+  salvataggio, eliminazione, accesso e registrazione, gestione delle tassonomie.
 - `references/pocketbase.md` — schema, campi relation, regole di accesso, SMTP:
   le trappole con sintomo → causa → rimedio, e gli snippet client corretti.
 - `references/testing.md` — procedure di collaudo manuali, comandi curl commentati,
