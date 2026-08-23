@@ -78,7 +78,10 @@ pronti per chi amministra la VPS — sta in `references/setup.md`. In sintesi:
    creazione. È idempotente, quindi la specifica si tiene nel repo e si evolve col
    codice. Formato e scorciatoie per le regole in `references/dati.md`.
 4. Progetto Vercel collegato al repo GitHub, variabili d'ambiente impostate lì.
-5. Schermate CRUD e di autenticazione seguendo `references/crud-ui.md`.
+5. Schermate CRUD e di autenticazione seguendo `references/crud-ui.md`. Per l'interfaccia,
+   copia `assets/template/` invece di riscrivere da zero dialoghi e feedback aptico: è il
+   Modal accessibile, il Toast e la convenzione colore già estratti e puliti da questa
+   stessa app (vedi `assets/template/README.md`).
 6. Collaudo con gli script qui sotto **prima** di dire che è pronto.
 7. `pb_schema.py dump` committato nel repo: è l'unica copia dello schema fuori dal
    volume Docker.
