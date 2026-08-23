@@ -1,5 +1,5 @@
 ---
-name: vercel-pocketbase-app
+name: bob-webapp-stack
 description: >-
   Avvia, collega e collauda web app con frontend React/Vite su Vercel e backend
   PocketBase in Docker dietro Traefik su VPS. Usa questa skill ogni volta che si

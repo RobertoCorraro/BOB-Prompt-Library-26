@@ -2,59 +2,48 @@
 
 <div align="center">
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/RobertoCorraro/BOB-Prompt-Library-26/deploy.yml?branch=main&style=for-the-badge&logo=github&label=Deployment)
-![Version](https://img.shields.io/badge/version-1.1.0-22c55e?style=for-the-badge&logo=github)
+![Version](https://img.shields.io/badge/version-1.2.2-22c55e?style=for-the-badge&logo=github)
 ![PocketBase](https://img.shields.io/badge/PocketBase-Backend-B8DBE4?style=for-the-badge&logo=pocketbase)
-![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)
-![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=for-the-badge&logo=vercel)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)
+![Tailwind](https://img.shields.io/badge/Tailwind-CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css)
 
-**Il tuo centro di comando per l'ingegneria dei prompt. Organizza, testa e sincronizza i tuoi prompt AI in un'unica interfaccia premium.**
+**Libreria condivisa di prompt AI per il team: organizza, testa e compila i tuoi prompt in un'unica interfaccia mobile-first.**
 
-[Caratteristiche](#-caratteristiche) • [Installazione](#-installazione-rapida) • [Configurazione PocketBase](#-configurazione-pocketbase) • [Sicurezza](#-sicurezza) • [Troubleshooting](#-troubleshooting) • [Changelog](#-changelog)
+[Caratteristiche](#-caratteristiche) • [Sviluppo locale](#-sviluppo-locale) • [Backend PocketBase](#-backend-pocketbase) • [Deploy](#-deploy) • [Troubleshooting](#-troubleshooting)
 
 </div>
 
 ---
 
-## 📋 Changelog
-
-### v1.1.0 — 2026-06-27
-- **fix:** Errore di caricamento dati ora mostra il messaggio tecnico reale (HTTP status, campo PocketBase, dettaglio risposta) in un toast rosso fisso e chiudibile
-- **fix:** Se `VITE_POCKETBASE_URL` non è definita, l'app mostra una schermata di blocco invece di avviarsi in modalità mock
-- **feat:** Gli utenti non autenticati vedono i contenuti pubblici in sola lettura (nessun dato mock)
-- **feat:** Numero di versione visibile nell'header dell'app (sotto il nome, su desktop; accanto al logo su mobile)
-- **feat:** Versione tracciata in `package.json` e in questo README
-
-### v0.0.0 — rilascio iniziale
-- Prima versione funzionante con PocketBase, autenticazione, CRUD prompt, categorie, tipi, tag, revisioni
-
----
-
 ## 🎯 Panoramica
 
-**BOB Prompt Library** è uno strumento di produttività per professionisti AI. Offre sincronizzazione cloud nativa tramite **PocketBase**, gestione avanzata delle variabili e un'interfaccia mobile-first.
+**BOB Prompt Library** è uno strumento di produttività per prompt engineering, pensato come **libreria condivisa di team** (non librerie private per utente): chiunque abbia un account autenticato vede e può modificare i prompt di tutti. Frontend React/Vite su **Vercel**, dati su **PocketBase** self-hosted.
+
+> Per l'architettura completa (VPS, Traefik, modello di accesso, credenziali demo) vedi **[`CLAUDE.md`](./CLAUDE.md)** — è la fonte di verità operativa, non duplicata qui.
 
 ### 📎 Funzionalità
 
 | Categoria | Feature | Dettagli |
 |---|---|---|
-| ☁️ **Sincronizzazione** | **Cloud Native** | Integrazione completa con **PocketBase**. |
-| 🧩 **Ingegneria Prompt** | **Variabili Dinamiche** | Rilevamento `{{variabile}}` con compilatore interattivo. |
-| 🏷️ **Tassonomia** | **Gestione Custom** | Categorie, Tipi e Tag dinamici con colori personalizzati. |
+| ☁️ **Sincronizzazione** | **Cloud Native** | Backend PocketBase, un solo store condiviso da tutto il team. |
+| 🧩 **Ingegneria Prompt** | **Variabili Dinamiche** | Rilevamento `{{variabile}}` con compilatore interattivo (bottom-sheet su mobile). |
+| 🏷️ **Tassonomia** | **Gestione Custom** | Categorie, Tipi e Tag dinamici con colori personalizzati, gestibili da UI. |
 | 📋 **Gestione** | **Operazioni CRUD** | Creazione, modifica, eliminazione e duplicazione rapida. |
 | 🕐 **Versioning** | **Storico Revisioni** | Ogni modifica può essere archiviata come versione storica. |
 | 🔀 **Discovery** | **Filtri & Search** | Ricerca full-text e filtri incrociati per categoria, tipo e tag. |
 | ⭐ **Organizzazione** | **Preferiti** | Sistema di stelle per accesso rapido ai prompt più usati. |
-| 📊 **Visualizzazione** | **Dual View** | Switch dinamico tra modalità Grid e List. |
-| 📱 **UX Premium** | **Mobile-First** | Feedback aptico, layout adattivo, dark mode nativa. |
+| 👤 **Attribuzione** | **Creatore visibile** | Ogni card mostra chi ha creato il prompt (solo attribuzione, non un permesso). |
+| 📊 **Visualizzazione** | **Dual View** | Switch dinamico tra modalità Grid e List, entrambe ottimizzate per mobile. |
+| 📱 **UX Premium** | **Mobile-First** | Feedback aptico, dialoghi accessibili (focus trap, Escape, `role="dialog"`), dark mode. |
 | 📤 **Portabilità** | **Export JSON** | Esportazione prompt filtrati in JSON per backup o migrazione. |
-| 👁️ **Accesso pubblico** | **Sola lettura** | Contenuti visibili anche senza login; modifiche solo da utenti autenticati. |
+| 🖥️ **Landing page** | **Onboarding** | Pagina pubblica con presentazione delle funzionalità e account demo. |
 
 ---
 
-## 🚀 Installazione Rapida
+## 🚀 Sviluppo locale
 
-Assicurati di avere **Node.js >= 18** installato.
+Richiede **Node.js >= 18**.
 
 ```bash
 git clone https://github.com/RobertoCorraro/BOB-Prompt-Library-26.git
@@ -63,149 +52,67 @@ npm install
 npm run dev
 ```
 
-> ⚠️ Senza `VITE_POCKETBASE_URL` nel `.env`, l'app **non si avvia** e mostra una schermata di errore di configurazione.
+Senza `VITE_POCKETBASE_URL` valorizzata, l'app mostra una schermata di blocco "non configurato" invece di avviarsi — non esiste una modalità offline/mock.
 
----
+> ⚠️ `VITE_*` sono variabili **compile-time**: Vite le inietta nel bundle in fase di `build`. Cambiarle su Vercel (dashboard) non ha effetto finché non si rifà un deploy.
 
-## 🗄️ Configurazione PocketBase
+## 🗄️ Backend PocketBase
 
-### 1. Variabile d'ambiente
+- URL attuale: `https://pb.frasi.info` (vedi `.env`).
+- Collections principali: `prompts`, `prompt_categ`, `prompt_types`, `prompt_tags`, `prompt_revisions`, oltre a `users` (built-in). `prompts` e `prompt_revisions` referenziano categoria/tipo/tag come campi **relation** (per id, non per nome — vedi gotcha in `.claude/skills/bob-webapp-stack/references/pocketbase.md`).
+- Modello di accesso, regole API e credenziali demo: documentati in `CLAUDE.md`, non ripetuti qui per evitare che le due fonti si disallineino.
+- Per ricreare lo schema da zero su un'altra istanza, versionarlo o fare backup: `.claude/skills/bob-webapp-stack/scripts/pb_schema.py` (`dump` / `apply` / `restore`) e `references/dati.md` nella stessa skill.
 
-Crea un file `.env` nella root del progetto:
+## 🚢 Deploy
 
-```env
-VITE_POCKETBASE_URL=http://localhost:8090
-```
-
-Per produzione, imposta l'URL del tuo server PocketBase remoto.
-
-### 2. Primo avvio — Setup Wizard
-
-Al primo accesso con PocketBase configurato, l'app mostra automaticamente il **Setup Wizard** a 3 step:
-
-1. **Benvenuto** — panoramica di cosa accadrà
-2. **Crea account** — inserisci email, password e nome (opzionale)
-3. **Completato** — login automatico e accesso all'app
-
-Le credenziali vengono salvate direttamente su PocketBase, **nessuna password nel codice sorgente**.
-
-### 3. Regole API PocketBase (`users` collection)
-
-Nella **PocketBase Admin UI** (`/_/` → Collections → users → ⚙️ Edit → API Rules):
-
-| Regola | Valore per il setup | Dopo il setup |
-|---|---|---|
-| **List** | `@request.auth.id != ""` | invariato |
-| **View** | `@request.auth.id != ""` | invariato |
-| **Create** | `""` (aperta) | `false` o `@request.auth.id != ""` |
-| **Update** | `@request.auth.id = id` | invariato |
-| **Delete** | `@request.auth.id = id` | invariato |
-
-> ⚠️ Ricorda di chiudere la regola **Create** dopo aver creato il tuo account admin.
-
-### 4. Regole API per lettura pubblica
-
-Per permettere la visualizzazione dei prompt senza login, imposta queste regole sulle collection `prompts`, `categories`, `types`, `prompt_tags`:
-
-| Regola | Valore |
-|---|---|
-| **List** | `""` (vuota = pubblica) |
-| **View** | `""` (vuota = pubblica) |
-| **Create** | `@request.auth.id != ""` |
-| **Update** | `@request.auth.id != ""` |
-| **Delete** | `@request.auth.id != ""` |
-
-### 5. Collections necessarie
-
-Crea in PocketBase le seguenti collections con i relativi campi:
-
-| Collection | Campi principali |
-|---|---|
-| `prompts` | `title`, `content`, `category`, `type`, `tags` (JSON), `is_favorite` |
-| `categories` | `name`, `color` (JSON) |
-| `types` | `name`, `color` (JSON) |
-| `prompt_tags` | `name`, `color` (JSON) |
-| `prompt_revisions` | `prompt_id`, `title`, `content`, `category`, `type`, `tags` |
-
----
+Deploy automatico su **Vercel** a ogni push su `main` (nessuna GitHub Action, nessun secret SSH/registry da gestire). Storico dei tentativi precedenti (rsync su VPS, poi build Docker + GHCR) e perché sono stati abbandonati: `log-progettazione/PROBLEMI-STORICI.md`.
 
 ## 🔐 Sicurezza
 
-- **Nessuna credenziale nel codice** — `auth.config.js` è deprecato e non utilizzato.
-- **Sessione persistente** — il token PocketBase è salvato in `localStorage` (`bob_pb_auth`) e ripristinato automaticamente al reload.
-- **Token refresh automatico** — al bootstrap l'app tenta `authRefresh()` per rinnovare sessioni valide.
-- **Environment Safety** — `VITE_POCKETBASE_URL` gestita via variabile d'ambiente, mai hardcoded.
+- Nessuna credenziale hardcoded nel codice: solo `VITE_POCKETBASE_URL` (compile-time) e — per l'account demo mostrato in landing — credenziali di sola dimostrazione documentate in chiaro in `CLAUDE.md` (sono già nel bundle pubblico, non sono un segreto).
+- Sessione persistita dal client PocketBase (localStorage) con refresh automatico al bootstrap.
+- **Nessun isolamento dati per utente**: è una scelta di prodotto (libreria di team), non un bug — vedi `CLAUDE.md` § Modello di accesso.
 
----
-
-## 🏗️ Deployment Automatizzato
-
-Pipeline CI/CD preconfigurata con **GitHub Actions**:
-
-1. In GitHub *Settings → Secrets*, aggiungi `VITE_POCKETBASE_URL`.
-2. In *Settings → Pages*, imposta la sorgente su **GitHub Actions**.
-3. Un `git push` su `main` pubblica in meno di 2 minuti.
-
----
-
-## 📂 Struttura del Progetto
+## 📂 Struttura del progetto
 
 ```bash
 src/
-├── components/
-│   ├── Login.jsx          # Modal login con semaforo connessione PocketBase
-│   ├── SetupWizard.jsx    # Wizard primo avvio (crea account su PocketBase)
-│   ├── AdminModal.jsx
-│   └── ...
+├── components/       # Modal.jsx è la primitiva di dialogo condivisa (focus trap, a11y);
+│                      # tutti gli altri *Modal.jsx/FilterSidebar la usano
 ├── lib/
-│   ├── pocketbase.js      # Client PocketBase + persistenza sessione localStorage
-│   └── utils.js
-├── auth.config.js         # ⚠️ DEPRECATO — può essere eliminato
-└── App.jsx                # Logica centrale, bootstrap e gestione appState
+│   ├── pocketbase.js  # Client PocketBase + flag isPocketBaseConfigured/isSmtpConfigured
+│   └── utils.js       # parseDate/formatDate (gestisce il formato data di PocketBase),
+│                       # extractVariables, triggerHaptic
+└── App.jsx            # Stato centrale, bootstrap, normalizzazione relation↔nome (idFor/normalizeRecord)
 ```
-
----
 
 ## 🔧 Troubleshooting
 
-### Il Setup Wizard si ripresenta ad ogni reload
+### Schermata di blocco "PocketBase non configurato"
 
-Succede quando il flag `bob_setup_done` non è stato scritto nel `localStorage`.
-Apri la console del browser e lancia:
+`VITE_POCKETBASE_URL` non è definita nel bundle in uso. In locale: controlla `.env`. Su Vercel: controlla la env var del progetto **e** rifai il deploy (è compile-time, vedi sopra).
 
-```js
-localStorage.setItem('bob_setup_done', 'true')
-location.reload()
-```
+### Errore di validazione al salvataggio (`validation_missing_rel_records` o simile)
 
-### "Email: Value must be unique" durante il setup
+Categoria/tipo/tag sono campi PocketBase `relation`: vanno scritti come id, non come nome. Se stai estendendo l'app, passa sempre dal pattern `idFor()`/`expand()` già in `App.jsx` — dettagli in `.claude/skills/bob-webapp-stack/references/crud-ui.md`.
 
-La tua email è già registrata su PocketBase (da un'installazione precedente). Il wizard intercetta questo errore e mostra automaticamente un pulsante **Vai al Login**. In alternativa, usa il link *"Ho già un account"* presente nel primo step del wizard.
+### Un tag "sparisce" dopo il salvataggio
 
-### Semaforo rosso — PocketBase non raggiungibile
+Controlla `maxSelect` sul campo relation `tags` in PocketBase: `0` significa singolo valore, non "illimitato" — va impostato esplicitamente (es. `20`). Successo reale già capitato una volta, log completo in `log-progettazione/PROBLEMI-STORICI.md`.
 
-- Verifica che PocketBase sia avviato: `./pocketbase serve`
-- Controlla che `VITE_POCKETBASE_URL` nel `.env` punti all'indirizzo corretto
-- Se usi Docker, verifica che la porta `8090` sia esposta
+### Date che appaiono come "Invalid Date" (soprattutto Safari/iOS)
 
-### Toast rosso fisso — errore tecnico al caricamento
+PocketBase restituisce `created`/`updated` con uno spazio invece di `T` — usa sempre `parseDate`/`formatDate` da `src/lib/utils.js`, mai `new Date(record.created)` diretto.
 
-Il banner rosso mostra il dettaglio tecnico esatto (es. `[HTTP 403] prompts: only authenticated users`).
-I motivi più comuni:
-- Le API Rules di PocketBase non permettono la lettura pubblica → imposta List/View su `""` per le collection che vuoi rendere pubbliche
-- Campo mancante o rinominato nel DB → il messaggio mostrerà il nome del campo incriminato
-- PocketBase non raggiungibile → vedrai `[HTTP 0]` o errore di rete
+### Altri problemi noti e già risolti in passato
 
-### Sessione persa dopo reload
-
-Il token è salvato in `localStorage` con chiave `bob_pb_auth`. Se viene rimosso manualmente o il browser è in modalità privata, dovrai fare login di nuovo.
+Prima di investigare da zero un sintomo che sembra "già visto", controlla `log-progettazione/PROBLEMI-STORICI.md`.
 
 ---
 
 <div align="center">
 
-**Built for the future of AI engineering.**
-Creato con ❤️ per una gestione intelligente della conoscenza AI.
+**BOB Prompt Library** — libreria di prompt condivisa per il team.
 
 [⬆ Torna all'inizio](#-bob-prompt-library)
 

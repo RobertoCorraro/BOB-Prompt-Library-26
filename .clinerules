@@ -1,9 +1,10 @@
 # BOB Prompt Library - Agent Instructions
 
-Mandatory: Read [DEVELOPER_GUIDELINES.md](file:///home/bob_dev/Linux%20BOB/Cartelle_GitHub%20/BOB_Prompt_Library/DEVELOPER_GUIDELINES.md) before any modification.
+Mandatory: read `CLAUDE.md` and `DEVELOPER_GUIDELINES.md` (repo root) before any modification. If the task touches PocketBase schema/rules, Vercel deploy, or replicating this app's setup elsewhere, also load the `bob-webapp-stack` Claude skill (`.claude/skills/bob-webapp-stack/`).
 
 Key rules:
-- Fallback to mock data if Supabase fails.
-- Premium UI/UX (Haptics, Dark Mode, Smooth Transitions).
-- Respect Vite base path: `/BOB-Prompt-Library-26/`.
-- Single source of truth for config.
+- No mock-data fallback — the app requires a working `VITE_POCKETBASE_URL` and shows an explicit error/blocked state otherwise, never fake data.
+- Premium UI/UX (haptics, dark mode, smooth transitions), violet/purple palette (not blue), WCAG AA contrast.
+- Deploy target is Vercel (no Vite `base` path needed — this is not GitHub Pages).
+- Single source of truth for config: `src/lib/pocketbase.js` and `src/lib/constants.js`.
+- Category/type/tags are PocketBase `relation` fields (ids), not plain strings — convert at the boundary (see `references/crud-ui.md` in the skill), never pass raw ids into presentation components.

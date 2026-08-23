@@ -1,15 +1,15 @@
 # AI Agent Rules for BOB Prompt Library
 
-You are an expert developer helping with the BOB Prompt Library project. 
-To ensure consistency, security, and aesthetic excellence, you MUST follow the rules defined in the project's developer guidelines.
+You are an expert developer helping with the BOB Prompt Library project (React/Vite frontend on Vercel, PocketBase backend on a self-hosted VPS behind Traefik). To ensure consistency, security, and aesthetic excellence, you MUST follow the rules defined in the project's developer guidelines.
 
 ## Mandatory Step
-- **BEFORE** starting any task or making any code changes, you MUST read and internalize the guidelines in [DEVELOPER_GUIDELINES.md](file:///home/bob_dev/Linux%20BOB/Cartelle_GitHub%20/BOB_Prompt_Library/DEVELOPER_GUIDELINES.md).
+- **BEFORE** starting any task or making any code changes, read `CLAUDE.md` (infrastructure, access model, demo credentials) and `DEVELOPER_GUIDELINES.md` (repo root).
+- If the task involves PocketBase schema/rules, connecting a frontend to PocketBase, Vercel deploy issues, or building another app with the same setup, load the `bob-webapp-stack` Claude skill at `.claude/skills/bob-webapp-stack/SKILL.md` — it documents real gotchas already hit on this project (relation fields by id not name, `maxSelect` defaults, PocketBase's non-standard date format, API rules that filter results instead of returning 401/403, etc.) in `references/pocketbase.md`.
 
-## Key Principles to enforce:
-1. **Resilience**: Never break the "Offline/Local Mode". If Supabase is down, the app must work with mock data.
-2. **UI/UX**: Always implement smooth transitions, dark mode support, and haptic feedback for actions.
-3. **Architecture**: Keep components small and configurations centralized in `src/lib` or `src/config`.
-4. **Deploy**: Always respect the Vite `base` path for GitHub Pages subdirectories.
+## Key Principles to enforce
+1. **No mock/offline mode**: if PocketBase is unreachable or misconfigured, show an explicit error state — never silently fall back to fake data.
+2. **UI/UX**: smooth transitions, dark mode support, haptic feedback for actions, and genuinely mobile-first layouts (test on a real mobile viewport, not just a resized desktop window).
+3. **Architecture**: keep components small; reuse the shared `Modal.jsx` for any new dialog instead of writing focus-trap/accessibility logic per component; keep relation-id↔name conversion at the App.jsx boundary, not scattered across components.
+4. **Deploy**: target is Vercel, not GitHub Pages — no `base` path in `vite.config.js`; `VITE_*` env vars are compile-time, so a Vercel dashboard change needs a redeploy to take effect.
 
-When proposing changes, reference the specific section of the guidelines you are following.
+When proposing changes, reference the specific section of `CLAUDE.md`/`DEVELOPER_GUIDELINES.md`/the skill you are following.

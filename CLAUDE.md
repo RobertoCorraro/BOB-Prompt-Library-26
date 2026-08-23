@@ -1,5 +1,21 @@
 # Note operative — BOB Prompt Library
 
+## Mappa della documentazione
+
+Questo file è la fonte di verità per infrastruttura, modello di accesso e
+credenziali — non duplicata altrove. Per il resto:
+- `README.md` — panoramica prodotto/funzionalità e sviluppo locale.
+- `GUIDA_TECNICA.md` — spiegazione narrativa dello stack per chi non è
+  developer; rimanda qui e alla skill per i dettagli.
+- `DEVELOPER_GUIDELINES.md` — convenzioni di codice e design system.
+- `log-progettazione/PROBLEMI-STORICI.md` — problemi reali già incontrati e
+  risolti su *questa* app (controllalo prima di investigare un sintomo che
+  sembra già visto).
+- `.claude/skills/bob-webapp-stack/` — skill Claude riusabile per creare o
+  collegare **altre** webapp con lo stesso stack (React/Vite + PocketBase +
+  Vercel), inclusi script di test CRUD/login/schema e gotcha generici (non
+  legati alla storia specifica di questa app).
+
 ## Infrastruttura
 
 - **Backend (PocketBase)**: containerizzato con Docker su una VPS Hostinger
